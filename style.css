@@ -213,16 +213,25 @@ html, body {
     .typing.animate {
       font-size: 4em;
     }
+    html, body {
+        padding-bottom: 75px;
+    }
 }
 @media(max-width:600px)
 {
     .typing.animate {
       font-size: 3em;
     }
+    html, body {
+        padding-bottom: 75px;
+    }
 }
 @media(max-width:300px) 
 {
     .typing.animate {
       font-size: 2em;
+    }
+    html, body {
+        padding-bottom: 75px;
     }
 }
