@@ -6,13 +6,19 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
+  width: 100vw;
   background-color: #f9dadc;
   font-family: 'Exo', sans-serif;
+  max-width: 100vw !important;
+  overflow: hidden !important;
+  overscroll-behavior-y: none;
+  position: fixed;
+  align-content: center;
 }
 
 
