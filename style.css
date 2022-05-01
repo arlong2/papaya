@@ -1,0 +1,245 @@
+@import url('https://fonts.googleapis.com/css?family=Exo:400,700');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f9dadc;
+  font-family: 'Exo', sans-serif;
+}
+
+
+.typing.animate {
+  width: 17ch;
+  padding: 20px;
+  border-right: 0.1em solid black;
+  font-family: monospace;
+  font-size: 6em;
+  font-weight: bold;
+  
+  color:  black;
+  animation: type 1.5s steps(16), writer 1s infinite alternate, delete 0.5s steps(5) 2.5s, type2 0.5s steps(4) 3s forwards;
+  overflow: hidden;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.typing.animate::before { 
+  content: "papaya.party ...";
+  animation: type2 1s steps(4) 3s forwards;
+}
+
+@keyframes type {
+  from {
+    width: 0;
+  }
+  to {
+    width: 17ch;
+  }
+}
+
+@keyframes type2 {
+  from {
+    width: 14ch;
+    content: "papaya.party 🎉 "
+  }
+  to {
+    width: 16ch;
+    content: "papaya.party 🎉 "
+  }
+}
+
+
+@keyframes writer {
+  50% {
+    border-color: transparent;
+  }
+}
+
+@keyframes delete {
+  from {
+    width: 17ch;
+  }
+  to {
+    width: 14ch;
+  }
+}
+
+.context {
+    width: 100%;
+    position: absolute;
+    top:50vh;
+    
+}
+
+.context h1{
+    text-align: center;
+    color: #fff;
+    font-size: 50px;
+}
+
+
+.circles{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.circles li{
+    position: absolute;
+    display: block;
+    list-style: none;
+    width: 200px;
+    height: 200px;
+    animation: papayas 25s linear infinite;
+    bottom: -200px;
+    background-repeat: no-repeat;
+    background-size: auto 100%;
+    
+}
+
+
+
+.circles li:nth-child(1){
+    left: 25%;
+    animation-delay: 0s;
+    background-image: url("img/papaya-1.png");
+}
+
+
+.circles li:nth-child(2){
+    left: 10%;
+    animation-delay: 2s;
+    animation-duration: 12s;
+    background-image: url("img/papaya-2.png");
+}
+
+.circles li:nth-child(3){
+    left: 70%;
+    animation-delay: 4s;
+    background-image: url("img/papaya-3.png");
+}
+
+.circles li:nth-child(4){
+    left: 40%;
+    animation-delay: 0s;
+    animation-duration: 18s;
+    background-image: url("img/papaya-4.png");
+}
+
+.circles li:nth-child(5){
+    left: 65%;
+    animation-delay: 0s;
+    background-image: url("img/papaya-6.png");
+}
+
+.circles li:nth-child(6){
+    left: 75%;
+    animation-delay: 3s;
+    background-image: url("img/papaya-1.png");
+}
+
+.circles li:nth-child(7){
+    left: 35%;
+    animation-delay: 7s;
+    background-image: url("img/papaya-2.png");
+}
+
+.circles li:nth-child(8){
+    left: 50%;
+    animation-delay: 15s;
+    animation-duration: 45s;
+    background-image: url("img/papaya-3.png");
+}
+
+.circles li:nth-child(9){
+    left: 20%;
+    animation-delay: 2s;
+    animation-duration: 35s;
+    background-image: url("img/papaya-4.png");
+}
+
+.circles li:nth-child(10){
+    left: 85%;
+    animation-delay: 0s;
+    animation-duration: 11s;
+    background-image: url("img/papaya-5.png");
+}
+
+
+@keyframes papayasUp500 {
+    0%    { transform: translateY(-900px) rotate(0deg); }
+    100%  { transform: translateY(0) rotate(720deg); }
+}
+
+@keyframes papayasUp900 {
+    0%    { transform: translateY(-1600px) rotate(0deg); }
+    100%  { transform: translateY(0) rotate(720deg); }
+}
+
+@keyframes papayasUp1500 {
+    0%    { transform: translateY(-2000px) rotate(0deg); }
+    100%  { transform: translateY(0) rotate(720deg); }
+}
+
+@keyframes papayas {
+    0%    { transform: translateY(-3000px) rotate(0deg); }
+    100%  { transform: translateY(0) rotate(720deg); }
+}
+
+@media(max-height:1500px) 
+{
+    .circles li{
+        animation: papayasUp1500 25s linear infinite;
+        width: 200px;
+    height: 200px;
+    }
+}
+
+@media(max-height:900px) 
+{
+    .circles li{
+      animation: papayasUp900 25s linear infinite;
+      width: 150px;
+      height: 150px;
+    }
+}
+
+@media(max-height:500px) 
+{
+    .circles li{
+        animation: papayasUp500 25s linear infinite;
+        width: 120px;
+        height: 120px;
+    }
+}
+
+
+@media(max-width:820px) 
+{
+    .typing.animate {
+      font-size: 4em;
+    }
+}
+@media(max-width:600px)
+{
+    .typing.animate {
+      font-size: 3em;
+    }
+}
+@media(max-width:300px) 
+{
+    .typing.animate {
+      font-size: 2em;
+    }
+}
