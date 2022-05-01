@@ -97,6 +97,7 @@ html, body {
     left: 25%;
     animation-delay: 0s;
     background-image: url("img/papaya-1.png");
+    z-index: -1;
 }
 
 
@@ -105,12 +106,14 @@ html, body {
     animation-delay: 2s;
     animation-duration: 12s;
     background-image: url("img/papaya-2.png");
+    z-index: 1;
 }
 
 .circles li:nth-child(3){
     left: 70%;
     animation-delay: 4s;
     background-image: url("img/papaya-3.png");
+    z-index: -1;
 }
 
 .circles li:nth-child(4){
@@ -118,24 +121,28 @@ html, body {
     animation-delay: 0s;
     animation-duration: 18s;
     background-image: url("img/papaya-4.png");
+    z-index: 1;
 }
 
 .circles li:nth-child(5){
     left: 65%;
     animation-delay: 0s;
     background-image: url("img/papaya-6.png");
+    z-index: -1;
 }
 
 .circles li:nth-child(6){
     left: 75%;
     animation-delay: 3s;
     background-image: url("img/papaya-1.png");
+    z-index: 1;
 }
 
 .circles li:nth-child(7){
     left: 35%;
     animation-delay: 7s;
     background-image: url("img/papaya-2.png");
+    z-index: -1;
 }
 
 .circles li:nth-child(8){
@@ -143,6 +150,7 @@ html, body {
     animation-delay: 15s;
     animation-duration: 45s;
     background-image: url("img/papaya-3.png");
+    z-index: 1;
 }
 
 .circles li:nth-child(9){
@@ -150,6 +158,7 @@ html, body {
     animation-delay: 2s;
     animation-duration: 35s;
     background-image: url("img/papaya-4.png");
+    z-index: -1;
 }
 
 .circles li:nth-child(10){
@@ -157,6 +166,7 @@ html, body {
     animation-delay: 0s;
     animation-duration: 11s;
     background-image: url("img/papaya-5.png");
+    z-index: 1;
 }
 
 
