@@ -17,23 +17,20 @@ body {
 
 
 .typing.animate {
-  width: 17ch;
-  padding: 20px;
+  width: 15ch;
   border-right: 0.1em solid black;
   font-family: monospace;
   font-size: 6em;
   font-weight: bold;
-  
   color:  black;
-  animation: type 1.5s steps(16), writer 1s infinite alternate, delete 0.5s steps(5) 2.5s, type2 0.5s steps(4) 3s forwards;
+  animation: type 1.5s steps(16), writer 1s infinite alternate;
   overflow: hidden;
   white-space: nowrap;
   cursor: pointer;
 }
 
 .typing.animate::before { 
-  content: "papaya.party ...";
-  animation: type2 1s steps(4) 3s forwards;
+  content: "papaya.party 🎉";
 }
 
 @keyframes type {
@@ -41,21 +38,9 @@ body {
     width: 0;
   }
   to {
-    width: 17ch;
+    width: 15ch;
   }
 }
-
-@keyframes type2 {
-  from {
-    width: 14ch;
-    content: "papaya.party 🎉 "
-  }
-  to {
-    width: 16ch;
-    content: "papaya.party 🎉 "
-  }
-}
-
 
 @keyframes writer {
   50% {
@@ -63,14 +48,6 @@ body {
   }
 }
 
-@keyframes delete {
-  from {
-    width: 17ch;
-  }
-  to {
-    width: 14ch;
-  }
-}
 
 .context {
     width: 100%;
