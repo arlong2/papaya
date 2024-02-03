@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coworker Bingo Card Generator</title>
+  <!-- Include Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      padding: 20px;
+    }
+    .bingo-card-container {
+      margin-top: 20px;
+    }
+    .bingo-card {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .bingo-cell {
+      border: 1px solid #dee2e6;
+      padding: 20px;
+      text-align: center;
+      background-color: #ffffff;
+      border-radius: 5px;
+      height: 160px; /* Set a fixed height for each cell */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .bingo-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      display: none; /* Initially hide the B I N G O letters */
+    }
+    .bingo-column {
+      flex: 1;
+      text-align: center;
+      font-size: 2rem;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="mt-4">Coworker Bingo Card Generator</h1>
+    
+    <form id="answer-form">
+      <div id="question-container" class="form-group">
+        <label id="question-label">Who's answering the questions?</label>
+        <input type="text" class="form-control" id="answer" onkeypress="submitOnEnter(event)" required>
+      </div>
+
+      <button type="button" class="btn btn-primary" onclick="askNextQuestion()" id="next-question-btn">Next Question</button>
+      <button type="button" class="btn btn-primary" id="generate-btn" onclick="generateBingoCards()" style="display: none;">Generate Bingo Cards</button>
+    </form>
+
+    <div class="bingo-header">
+      <div class="bingo-column">B</div>
+      <div class="bingo-column">I</div>
+      <div class="bingo-column">N</div>
+      <div class="bingo-column">G</div>
+      <div class="bingo-column">O</div>
+    </div>
+
+    <div id="bingo-card-container" class="bingo-card-container"></div>
+  </div>
+
+  <!-- Include Bootstrap JS and Popper.js -->
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+  <script>
+    // Array of 100 possible questions
+    const questionsBank = [
+     "What is your favorite movie?",
+     "Where is your hometown?",
+     "Do you have any pets?",
+     "What is your favorite type of cuisine?",
+     "What is your go-to coffee order?",
+     "If you could travel anywhere in the world, where would you go?",
+     "What is your favorite book?",
+     "What is your favorite TV show?",
+     "Do you have any hidden talents?",
+     "What is your dream job?",
+     "What is your favorite hobby?",
+     "Are you a morning person or a night owl?",
+     "What is your favorite music genre?",
+     "Do you play any musical instruments?",
+     "What is your favorite sports team?",
+     "Are you a cat person or a dog person?",
+     "What is your favorite season?",
+     "Do you have any siblings?",
+     "What is your favorite dessert?",
+     "Are you a fan of any particular celebrity?",
+     "Do you prefer sweet or savory snacks?",
+     "What is your favorite color?",
+     "Do you enjoy cooking?",
+     "What is your favorite type of exercise?",
+     "If you could have any superpower, what would it be?",
+     "What is your favorite type of vacation?",
+     "What is your most-used app on your phone?",
+     "Do you have any phobias?",
+     "What is your favorite type of art?",
+     "What is your favorite childhood memory?",
+     "Do you have a favorite quote or motto?",
+     "What is your preferred mode of transportation?",
+     "Are you a morning shower or evening shower person?",
+     "What is your favorite board game?",
+     "Do you have a favorite quote or motto?",
+     "If you could meet any historical figure, who would it be?",
+     "What is your favorite type of cuisine?",
+     "What is your preferred way to relax after a long day?",
+     "Do you have any favorite podcasts?",
+     "What is your favorite app on your phone?",
+     "Do you have any hidden talents?",
+     "What is your favorite way to stay active?",
+     "What is your favorite holiday?",
+     "Do you have any favorite TV shows or movies from your childhood?",
+     "What is your favorite type of music?",
+     "Do you have a favorite type of exercise?",
+     "What is your favorite type of outdoor activity?",
+     "Are you a morning person or a night owl?",
+     "Do you have any favorite hobbies or pastimes?",
+     "What is your favorite type of cuisine?",
+     "Do you have any favorite books or authors?",
+     "What is your favorite type of art or artistic style?",
+     "Do you have a favorite quote or saying that inspires you?",
+     "What is your favorite way to spend a weekend?",
+     "Do you have any favorite travel destinations?",
+     "What is your favorite type of weather?",
+     "Do you have any favorite childhood memories?",
+     "What is your favorite type of cuisine?",
+     "Do you have any favorite board games or card games?",
+     "What is your favorite type of dessert?",
+     "Do you have any favorite movies or TV shows from your childhood?",
+     "What is your favorite type of music or favorite band/artist?",
+     "Do you have any favorite apps or websites?",
+     "What is your favorite type of exercise or physical activity?",
+     "Do you have any favorite podcasts or YouTube channels?",
+     "What is your favorite type of art or artistic medium?",
+     "Do you have any favorite quotes or sayings that resonate with you?",
+     "What is your favorite way to relax and unwind?",
+     "Do you have any favorite hobbies or activities that you enjoy in your free time?",
+     "What is your favorite holiday or special occasion?",
+     "Do you have any favorite childhood games or activities?",
+     "What is your favorite type of cuisine or favorite dish?",
+     "Do you have any favorite books or authors that have had a significant impact on you?",
+     "What is your favorite type of movie or TV show genre?",
+     "Do you have any favorite sports or athletic activities?",
+     "What is your favorite type of weather or season?",
+     "Do you have any favorite travel destinations or dream vacations?",
+     "What is your favorite type of technology or gadget?",
+     "Do you have any favorite historical figures or events?",
+     "What is your favorite type of vehicle or mode of transportation?",
+     "Do you have any favorite restaurants or cafes?",
+     "What is your favorite type of clothing or fashion style?",
+     "Do you have any favorite quotes or mantras that you live by?",
+     "What is your favorite type of art or artistic expression?",
+     "Do you have any favorite activities or hobbies that you enjoy with friends or family?",
+     "What is your favorite type of cuisine or food dish?",
+     "Do you have any favorite movies or TV shows that you could watch repeatedly?",
+     "What is your favorite type of music or favorite musical artist?",
+     "Do you have any favorite board games or card games that you enjoy playing?",
+     "What is your favorite type of outdoor activity or adventure?",
+     "Do you have any favorite childhood memories or experiences?",
+     "What is your favorite type of technology or gadget?",
+     "Do you have any favorite books or authors that you often recommend to others?",
+     "What is your favorite type of exercise or physical activity to stay fit?",
+     "Do you have any favorite podcasts or audio content that you regularly listen to?",
+     "What is your favorite type of weather or climate?",
+     "Do you have any favorite travel destinations or dream vacation spots?",
+     "What is your favorite type of vehicle or mode of transportation?",
+     "Do you have any favorite historical figures or events that you find fascinating?",
+     "What is your favorite type of clothing or fashion style?",
+      // Add more questions as needed
+    ];
+
+    let currentQuestionIndex = 0;
+    let answers = [];
+
+    function askNextQuestion() {
+      const questionLabel = document.getElementById('question-label');
+      const answerInput = document.getElementById('answer');
+      const nextQuestionBtn = document.getElementById('next-question-btn');
+      const generateButton = document.getElementById('generate-btn');
+
+      // Check if all questions have been asked
+      if (currentQuestionIndex >= 24) {
+        alert("You've answered all the questions. Please generate the bingo cards.");
+        return;
+      }
+
+      // Save the answer
+      const answer = answerInput.value.trim();
+      answers.push(answer);
+
+      // Display the next question or generate button
+      if (currentQuestionIndex === 23) {
+        const currentQuestion = questionsBank[currentQuestionIndex];
+        questionLabel.textContent = `${currentQuestionIndex + 1}. ${currentQuestion}`;
+        answerInput.value = '';
+        currentQuestionIndex++;
+        nextQuestionBtn.style.display = 'none';
+        generateButton.style.display = 'block';
+      } else {
+        // Display the next question
+        const currentQuestion = questionsBank[currentQuestionIndex];
+        questionLabel.textContent = `${currentQuestionIndex + 1}. ${currentQuestion}`;
+        answerInput.value = '';
+        currentQuestionIndex++;
+      }
+    }
+
+    function submitOnEnter(event) {
+      if (event.key === 'Enter') {
+        currentQuestionIndex < 24 ? askNextQuestion() : generateBingoCards();
+      }
+    }
+
+    function generateBingoCards() {
+
+      const bingoCardContainer = document.getElementById('bingo-card-container');
+      const bingoHeader = document.querySelector('.bingo-header');
+      const generateButton = document.getElementById('generate-btn');
+      const answerInput = document.getElementById('answer');
+      const questionLabel = document.getElementById('question-label');
+
+      // Save the answer to the last question
+      const answer = answerInput.value.trim();
+      answers.push(answer);
+
+      // Show the B I N G O letters
+      bingoHeader.style.display = 'flex';
+
+      // Prompt the user for the number of bingo cards to generate
+      const numberOfCards = parseInt(prompt("How many bingo cards do you want to generate?"), 10);
+
+      // Validate the input
+      if (isNaN(numberOfCards) || numberOfCards <= 0) {
+        alert("Please enter a valid number greater than zero.");
+        return;
+      }
+
+      // Clear any existing bingo card containers
+      bingoCardContainer.innerHTML = '';
+
+      // Generate the specified number of bingo cards
+      for (let i = 1; i <= numberOfCards; i++) {
+        // Shuffle the answers array for each card
+        const shuffledAnswers = shuffleArray([...answers]);
+
+        const outerCard = document.createElement('div');
+        outerCard.innerHTML = `</br></br></br><h3>Card ${i}</h3></br>`;
+        outerCard.appendChild(bingoHeader.cloneNode(true));
+
+        const card = document.createElement('div');
+        card.className = 'bingo-card';
+        
+        const footer = document.createElement('div');
+        footer.innerHTML = `&nbsp;`;
+        footer.setAttribute("style", "page-break-after: always;");
+
+
+        outerCard.appendChild(card);
+        outerCard.appendChild(footer);
+        bingoCardContainer.appendChild(outerCard);
+
+        
+
+        // Create a 5x5 grid for each card
+        for (let j = 0; j < 5; j++) {
+          for (let k = 0; k < 5; k++) {
+            const cell = document.createElement('div');
+            cell.className = 'bingo-cell';
+
+            if (j === 2 && k === 2) {
+              // Center square is a free space
+              cell.textContent = 'Free Space';
+            } else {
+              // Use an answer from the shuffled answers
+              const answerIndex = j * 4 + k; // Adjust index for 24 questions
+              const answer = shuffledAnswers[answerIndex];
+
+              // Add the answer to the cell
+              cell.textContent = answer;
+            }
+
+            card.appendChild(cell);
+          }
+        }
+      }
+
+      // Disable the "Generate Bingo Cards" button after generating
+      generateButton.disabled = true;
+      generateButton.style.display = 'none';
+      answerInput.style.display = 'none';
+      bingoHeader.style.display = 'none';
+      questionLabel.style.display = 'none';
+
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+  </script>
+</body>
+</html>
