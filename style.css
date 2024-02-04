@@ -35,6 +35,20 @@ html, body {
   animation: fadeinout 3s linear forwards;
 }
 
+.bingo {
+  width:  100%;
+  position: absolute;
+  bottom: 50%;
+  z-index: 999999;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  -webkit-animation: fadeinout 3s linear forwards;
+  animation: fadeinout 3s linear forwards;
+}
+
 @-webkit-keyframes fadeinout {
   50% { opacity: 0; }
   100% { opacity: 1; }
@@ -59,6 +73,19 @@ html, body {
 
 
   
+}
+
+.bingob {
+  background-color: #f9dadc; 
+  color: black; 
+  border: 2px solid black;
+  border-radius: .75rem;
+  font-weight: 500;
+}
+
+.bingob:hover {
+  background-color: #007bff;
+  color: white;
 }
 
 .join {
@@ -303,4 +330,16 @@ html, body {
         padding-bottom: 75px;
     }
     
+}
+
+#canvas_container_div {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+#canvas {
+  width: 100%;
+  height: 100%;
+  background: transparent;
 }
