@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connections Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            position: relative;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 800px; /* Increased size */
+            width: 100%;
+            text-align: center;
+        }
+        .word-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px; /* Increased gap */
+            margin: 20px 0;
+            position: relative;
+        }
+        .word-grid button {
+            padding: 20px; /* Increased padding */
+            border: 1px solid #ccc;
+            background-color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 1s, border-color 1s, transform 1s;
+            font-size: 1.2em; /* Increased font size */
+        }
+        .word-grid button.selected {
+            background-color: #d1e7dd;
+            border-color: #0f5132;
+        }
+        .submit-btn {
+            padding: 15px 30px; /* Increased size */
+            font-size: 1.2em; /* Increased font size */
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .submit-btn:disabled {
+            background-color: #6c757d;
+        }
+        .message {
+            margin-top: 20px;
+        }
+        .lives {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .life {
+            width: 20px;
+            height: 20px;
+            background-color: lightgreen; /* Changed color to light green */
+            border-radius: 50%;
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Connections Game</h1>
+        <div class="word-grid" id="correct-words">
+            <!-- Correct words will be moved here -->
+        </div>
+        <div class="word-grid" id="word-grid">
+            <!-- Words will be dynamically inserted here -->
+        </div>
+        <button class="submit-btn" disabled>Submit</button>
+        <div class="message"></div>
+        <div class="lives">
+            <div class="life" id="life1"></div>
+            <div class="life" id="life2"></div>
+            <div class="life" id="life3"></div>
+        </div>
+    </div>
+
+    <!-- Include the canvas-confetti library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        const submitBtn = document.querySelector('.submit-btn');
+        const messageDiv = document.querySelector('.message');
+        const correctWordsContainer = document.getElementById('correct-words');
+        const wordGridContainer = document.getElementById('word-grid');
+        let selectedWords = [];
+        let correctGroups = 0;
+        let lives = 3;
+        const totalGroups = 4;
+
+        const allGroups = [
+            ['Apple', 'Banana', 'Grapes', 'Orange'],
+            ['Dog', 'Cat', 'Elephant', 'Horse'],
+            ['Carrot', 'Potato', 'Tomato', 'Peach'],
+            ['Rabbit', 'Watermelon', 'Zebra', 'Lemon'],
+            ['Blue', 'Red', 'Green', 'Yellow'],
+            ['Circle', 'Square', 'Triangle', 'Rectangle'],
+            ['Monday', 'Tuesday', 'Wednesday', 'Thursday'],
+            ['North', 'South', 'East', 'West'],
+            ['Winter', 'Spring', 'Summer', 'Fall'],
+            ['Gold', 'Silver', 'Bronze', 'Platinum']
+        ];
+
+        let groups = [];
+        function getRandomGroups() {
+            const shuffled = allGroups.sort(() => 0.5 - Math.random());
+            groups = shuffled.slice(0, totalGroups);
+        }
+
+        function setupGame() {
+            wordGridContainer.innerHTML = '';
+            getRandomGroups();
+            const words = groups.flat().sort(() => 0.5 - Math.random());
+            words.forEach(word => {
+                const button = document.createElement('button');
+                button.innerText = word;
+                button.addEventListener('click', () => {
+                    if (button.classList.contains('selected')) {
+                        button.classList.remove('selected');
+                        selectedWords = selectedWords.filter(selectedWord => selectedWord !== word);
+                    } else {
+                        button.classList.add('selected');
+                        selectedWords.push(word);
+                    }
+                    submitBtn.disabled = selectedWords.length !== 4;
+                });
+                wordGridContainer.appendChild(button);
+            });
+        }
+
+        submitBtn.addEventListener('click', checkConnection);
+
+        function checkConnection() {
+            let foundGroup = false;
+            groups.forEach(group => {
+                if (group.every(word => selectedWords.includes(word))) {
+                    messageDiv.innerText = 'Correct! You found a connection.';
+                    foundGroup = true;
+                    correctGroups++;
+                    moveCorrectWords(group);
+                }
+            });
+
+            if (!foundGroup) {
+                messageDiv.innerText = 'Incorrect. Try again.';
+                loseLife();
+                resetSelection();
+            }
+
+            if (correctGroups === totalGroups) {
+                triggerConfetti();
+            }
+
+            submitBtn.disabled = true;
+        }
+
+        function moveCorrectWords(group) {
+            const randomColor = getRandomLightColor();
+            group.forEach(word => {
+                const button = Array.from(wordGridContainer.querySelectorAll('button')).find(btn => btn.innerText === word);
+                const rect = button.getBoundingClientRect();
+                const containerRect = wordGridContainer.getBoundingClientRect();
+                const clone = button.cloneNode(true);
+
+                clone.style.position = 'absolute';
+                clone.style.top = `${rect.top - containerRect.top}px`;
+                clone.style.left = `${rect.left - containerRect.left}px`;
+                clone.style.width = `${rect.width}px`;
+                clone.style.height = `${rect.height}px`;
+                clone.style.backgroundColor = randomColor;
+                clone.style.borderColor = randomColor;
+                clone.style.zIndex = '10';
+
+                wordGridContainer.appendChild(clone);
+                button.style.visibility = 'hidden';
+
+                requestAnimationFrame(() => {
+                    const correctRect = correctWordsContainer.getBoundingClientRect();
+                    clone.style.transform = `translate(${correctRect.left - containerRect.left}px, ${correctRect.top - containerRect.top}px)`;
+                });
+
+                setTimeout(() => {
+                    clone.style.position = 'relative';
+                    clone.style.transform = 'none';
+                    clone.style.top = 'auto';
+                    clone.style.left = 'auto';
+                    clone.style.width = 'auto';
+                    clone.style.height = 'auto';
+                    clone.style.zIndex = '0';
+                    correctWordsContainer.appendChild(clone);
+                    button.remove();
+                }, 1000);
+            });
+
+            resetSelection();
+        }
+
+        function resetSelection() {
+            selectedWords = [];
+            wordGridContainer.querySelectorAll('button').forEach(button => button.classList.remove('selected'));
+        }
+
+        function getRandomLightColor() {
+            const r = Math.floor(Math.random() * 156 + 100); // Ensure light colors
+            const g = Math.floor(Math.random() * 156 + 100);
+            const b = Math.floor(Math.random() * 156 + 100);
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        function triggerConfetti() {
+            confetti({
+                particleCount: 200,
+                spread: 60,
+                origin: { y: 0.6 }
+            });
+        }
+
+        function loseLife() {
+            if (lives > 0) {
+                document.getElementById(`life${lives}`).style.backgroundColor = 'gray';
+                lives--;
+                if (lives === 0) {
+                    messageDiv.innerText = 'Game Over! You have lost all your lives.';
+                    wordGridContainer.querySelectorAll('button').forEach(button => button.disabled = true);
+                    submitBtn.disabled = true;
+                }
+            }
+        }
+
+        setupGame();
+    </script>
+</body>
+</html>
