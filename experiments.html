@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experiments</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: black;
+            color: white;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+        .tile {
+            position: relative;
+            border: 0px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.2s, background 0.2s;
+            min-width: 250px;
+        }
+        .tile:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .tile img {
+            width: 100%;
+            height: 260px;
+            object-fit: cover;
+        }
+        .label {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            font-size: 0.8em;
+            border-radius: 3px;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            z-index: 3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .dot {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+        }
+        .dot:nth-child(1) {
+            left: calc(50% - 90px);
+            top: 50%;
+            animation: spiral 3s ease-in-out forwards 0.2s;
+        }
+        .dot:nth-child(2) {
+            left: calc(50% - 30px);
+            top: 50%;
+            animation: spiral 3s ease-in-out forwards 0.4s;
+        }
+        .dot:nth-child(3) {
+            left: calc(50% + 30px);
+            top: 50%;
+            animation: spiral 3s ease-in-out forwards 0.6s;
+        }
+        @keyframes spiral {
+            0% {
+                transform: rotate(0deg) translateX(0);
+                opacity: 1;
+            }
+            50% {
+                transform: rotate(180deg) translateX(300px);
+                opacity: 0.5;
+            }
+            100% {
+                transform: rotate(720deg) translateX(1000px);
+                opacity: 0;
+            }
+        }
+        .background-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+        .floating {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay" id="overlay">
+        <!-- Three dots for the initial spiral effect -->
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+    </div>
+    <div class="background-animation" id="background-animation">
+        <div class="floating" style="top: 10%; left: 20%;"></div>
+        <div class="floating" style="top: 50%; left: 30%;"></div>
+        <div class="floating" style="top: 80%; left: 70%;"></div>
+        <div class="floating" style="top: 20%; left: 40%;"></div>
+        <div class="floating" style="top: 60%; left: 60%;"></div>
+        <div class="floating" style="top: 30%; left: 10%;"></div>
+        <div class="floating" style="top: 70%; left: 50%;"></div>
+        <div class="floating" style="top: 40%; left: 80%;"></div>
+        <div class="floating" style="top: 80%; left: 20%;"></div>
+    </div>
+    <div class="container" id="container">
+        <a href="/bingo.html">
+        <div class="tile">
+            <img src="https://raw.githubusercontent.com/arlong2/papaya/master/bingo.png" alt="Coworker Bingo">
+            <div class="label">ChatGPT 3.5</div>
+        </div>
+        </a>
+        <a href="/connections.html">
+        <div class="tile">
+            <img src="https://raw.githubusercontent.com/arlong2/papaya/master/conections.png" alt="Connections">
+            <div class="label">ChatGPT 4o</div>
+        </div>
+        </a>
+    
+        <!-- Add more tiles as needed -->
+    </div>
+    <script>
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('overlay').style.display = 'none';
+                document.getElementById('container').style.opacity = '1';
+            }, 3500); // Adjust the timing to match the animation duration
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            const background = document.getElementById('background-animation');
+            const x = (e.clientX / window.innerWidth) * 50;
+            const y = (e.clientY / window.innerHeight) * 50;
+
+            background.style.transform = `translate(-${x}px, -${y}px)`;
+        });
+    </script>
+</body>
+</html>
