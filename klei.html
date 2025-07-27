@@ -7,9 +7,81 @@
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
+    #title {
+      position: absolute;
+      top: 60px;
+      width: 100%;
+      text-align: center;
+      font-size: 2em;
+      font-weight: bold;
+      color: white;
+      text-shadow: 2px 2px 5px black;
+      z-index: 10;
+      pointer-events: none; /* Keeps clicks on the canvas */
+    }
+    #banner {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      text-align: center;
+      font-size: 1.5em;
+      font-weight: bold;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    #waveText {
+      display: inline-block;
+      text-shadow: 2px 2px 4px black;
+      white-space: pre; /* ✅ Preserves spaces between words */
+    }
+
+    .letter {
+      display: inline-block;
+      animation: wave 1.5s infinite ease-in-out;
+      text-shadow: 1px 1px 2px black;
+    }
+
+    @keyframes wave {
+      0%   { transform: translateY(0); }
+      25%  { transform: translateY(-8px); }
+      50%  { transform: translateY(0); }
+      75%  { transform: translateY(8px); }
+      100% { transform: translateY(0); }
+    }
+
+    /* Rainbow colors */
+    .letter:nth-child(6n+1) { color: #d100ff; }  /* Neon Purple */
+    .letter:nth-child(6n+2) { color: #a100ff; }  /* Violet */
+    .letter:nth-child(6n+3) { color: #6f00ff; }  /* Indigo */
+    .letter:nth-child(6n+4) { color: #4000ff; }  /* Electric Blue-Violet */
+    .letter:nth-child(6n+5) { color: #0074ff; }  /* Neon Blue */
+    .letter:nth-child(6n)   { color: #00e0ff; }  /* Bright Cyan-Blue */
+
+    
   </style>
 </head>
 <body>
+  <script>
+    window.onload = () => {
+      const textEl = document.getElementById('waveText');
+      const text = textEl.textContent;
+      textEl.innerHTML = ''; // Clear original
+
+      // Split each character into span (including spaces)
+      text.split('').forEach((char, i) => {
+        const span = document.createElement('span');
+        span.className = 'letter';
+        span.textContent = char;
+        span.style.animationDelay = `${i * 0.1}s`;
+        textEl.appendChild(span);
+      });
+    };
+  </script>
+  <div id="banner">
+    <span id="waveText">Made with love for Reeves</span>
+  </div>
+  <div id="title">The World of Klei</div>
   <script type="module">
     import * as THREE from 'https://esm.sh/three@0.148.0';
     import { OrbitControls } from 'https://esm.sh/three@0.148.0/examples/jsm/controls/OrbitControls';
