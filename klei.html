@@ -58,6 +58,27 @@
     .letter:nth-child(6n+5) { color: #0074ff; }  /* Neon Blue */
     .letter:nth-child(6n)   { color: #00e0ff; }  /* Bright Cyan-Blue */
 
+    #controls {
+      position: absolute;
+      bottom: 70px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      color: white;
+      font-family: sans-serif;
+      font-size: 14px;
+      z-index: 20;
+      user-select: none;
+    }
+
+    #controls input {
+      width: 80px;
+      margin: 0 4px;
+      padding: 2px 6px;
+      font-size: 14px;
+      border-radius: 4px;
+      border: none;
+    }
     
   </style>
 </head>
@@ -81,6 +102,18 @@
   <div id="banner">
     <span id="waveText">Made with love for Reeves</span>
   </div>
+  <div id="controls">
+  <div>
+    <label>Point A:</label>
+    Lat <input id="latA" type="number" value="35" step="0.01">
+    Lon <input id="lonA" type="number" value="20" step="0.01">
+  </div>
+  <div>
+    <label>Point B:</label>
+    Lat <input id="latB" type="number" value="26.1" step="0.01">
+    Lon <input id="lonB" type="number" value="-96.1" step="0.01">
+  </div>
+</div>
   <div id="title">The World of Klei</div>
   <script type="module">
     import * as THREE from 'https://esm.sh/three@0.148.0';
@@ -114,6 +147,7 @@
     controls.minPolarAngle = 0;
     controls.maxPolarAngle = Math.PI;
 
+
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
@@ -126,6 +160,68 @@
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
+
+    const RADIUS = 1.01;
+    let markerA, markerB, arc;
+
+    // Convert lat/lon to 3D position
+    function latLongToVector3(lat, lon, radius) {
+      const phi = (90 - lat) * (Math.PI / 180);
+      const theta = (lon + 180) * (Math.PI / 180);
+      const x = -radius * Math.sin(phi) * Math.cos(theta);
+      const y = radius * Math.cos(phi);
+      const z = radius * Math.sin(phi) * Math.sin(theta);
+      return new THREE.Vector3(x, y, z);
+    }
+
+    // Create flat arc between two points
+    function createFlatArc(startVec, endVec, segments = 128) {
+      const arcPoints = [];
+      for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const point = new THREE.Vector3().copy(startVec).lerp(endVec, t).normalize().multiplyScalar(RADIUS);
+        arcPoints.push(point);
+      }
+      return new THREE.BufferGeometry().setFromPoints(arcPoints);
+    }
+
+    // Update markers + arc from input
+    function updateArcFromInputs() {
+      const latA = parseFloat(document.getElementById('latA').value);
+      const lonA = parseFloat(document.getElementById('lonA').value);
+      const latB = parseFloat(document.getElementById('latB').value);
+      const lonB = parseFloat(document.getElementById('lonB').value);
+
+      const pointA = latLongToVector3(latA, lonA, RADIUS);
+      const pointB = latLongToVector3(latB, lonB, RADIUS);
+
+      if (arc) scene.remove(arc);
+      if (markerA) scene.remove(markerA);
+      if (markerB) scene.remove(markerB);
+
+      // Line
+      const arcGeometry = createFlatArc(pointA, pointB);
+      arc = new THREE.Line(arcGeometry, new THREE.LineBasicMaterial({ color: 0xFFD700 }));
+      scene.add(arc);
+
+      // Markers
+      const markerMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const markerGeo = new THREE.SphereGeometry(0.015, 16, 16);
+      markerA = new THREE.Mesh(markerGeo, markerMat);
+      markerA.position.copy(pointA);
+      scene.add(markerA);
+      markerB = new THREE.Mesh(markerGeo, markerMat);
+      markerB.position.copy(pointB);
+      scene.add(markerB);
+    }
+
+    // Event listeners for controls
+    ['latA', 'lonA', 'latB', 'lonB'].forEach(id => {
+      document.getElementById(id).addEventListener('input', updateArcFromInputs);
+    });
+
+    // Initial draw
+    updateArcFromInputs();
   </script>
 </body>
 </html>
