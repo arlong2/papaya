@@ -61,25 +61,52 @@
     #controls {
       position: absolute;
       bottom: 70px;
-      left: 0;
-      width: 100%;
-      text-align: center;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(30, 30, 30, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 12px 20px;
       color: white;
-      font-family: sans-serif;
+      font-family: 'Segoe UI', Roboto, sans-serif;
       font-size: 14px;
-      z-index: 20;
-      user-select: none;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .control-group label {
+      min-width: 60px;
+      font-weight: 500;
+      color: #ccc;
     }
 
     #controls input {
-      width: 80px;
-      margin: 0 4px;
-      padding: 2px 6px;
+      background: #1e1e1e;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 6px 10px;
+      width: 110px;
+      transition: border-color 0.2s, background-color 0.2s;
       font-size: 14px;
-      border-radius: 4px;
-      border: none;
     }
-    
+
+    #controls input:focus {
+      outline: none;
+      border-color: #00ccff;
+      background-color: #2b2b2b;
+    }
+        
   </style>
 </head>
 <body>
@@ -105,8 +132,8 @@
   <div id="controls">
   <div>
     <label>Point A:</label>
-    Lat <input id="latA" type="number" value="35" step="0.01">
-    Lon <input id="lonA" type="number" value="20" step="0.01">
+    Lat    <input id="latA" type="number" value="35" step="0.01">
+    Lon    <input id="lonA" type="number" value="20" step="0.01">
   </div>
   <div>
     <label>Point B:</label>
