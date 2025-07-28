@@ -120,8 +120,8 @@
     </div>
     <div>
       <label>Point B:</label>
-      Lat <input id="latB" type="number" value="20" step="0.01">
-      Lon <input id="lonB" type="number" value="-90" step="0.01">
+      Lat <input id="latB" type="number" value="21" step="0.01">
+      Lon <input id="lonB" type="number" value="-98" step="0.01">
     </div>
   </div>
 
@@ -180,7 +180,7 @@
     }
 
     function findOceanPath(start, end, isOcean) {
-      const step = 10;
+      const step = 5;
       const queue = [{ lat: start.lat, lon: start.lon, cost: 0, path: [] }];
       const visited = new Set();
 
@@ -210,9 +210,6 @@
           if (!isOcean(nLat, nLon)) continue;
           const g = node.cost + haversine(lat, lon, nLat, nLon);
           queue.push({ lat: nLat, lon: nLon, cost: g, path: newPath });
-        }
-        if (queue.length % 100 === 0) {
-          console.log("Still exploring:", lat.toFixed(2), lon.toFixed(2), "dist to end:", haversine(lat, lon, end.lat, end.lon));
         }
       }
       return [];
@@ -246,7 +243,7 @@
 
       const isCoolColor = b >= g && b >= r;
 
-      return b >= 180 //&& isCoolColor;
+      return b >= 180 && r <= 10 && g <= 10//&& isCoolColor;
     }
 
     function debugOceanGrid() {
@@ -322,11 +319,8 @@
       markerB.position.copy(latLongToVector3(latB, lonB, RADIUS));
       scene.add(markerB);
       console.log("Ocean path length:", oceanPath.length);
-      // debugOceanGrid();
-      if (oceanPath.length < 2) {
-        console.warn("Ocean path failed. Drawing straight line instead.");
-        arcPoints.push({ lat: latA, lon: lonA }, { lat: latB, lon: lonB });
-      }
+      //debugOceanGrid();
+      
     }
 
     window.addEventListener('DOMContentLoaded', () => {
