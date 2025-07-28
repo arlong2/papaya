@@ -2,14 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>The World of Klei</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interactive 3D Globe</title>
   <style>
-    body { margin: 0; overflow: hidden; }
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
     canvas { display: block; }
+
     #title {
       position: absolute;
-      top: 60px;
+      top: 20px;
       width: 100%;
       text-align: center;
       font-size: 2em;
@@ -17,8 +18,9 @@
       color: white;
       text-shadow: 2px 2px 5px black;
       z-index: 10;
-      pointer-events: none; /* Keeps clicks on the canvas */
+      pointer-events: none;
     }
+
     #banner {
       position: absolute;
       bottom: 20px;
@@ -30,10 +32,19 @@
       pointer-events: none;
     }
 
-    #waveText {
+    #banner span {
       display: inline-block;
+      animation: wave 1.5s infinite ease-in-out;
       text-shadow: 2px 2px 4px black;
-      white-space: pre; /* ✅ Preserves spaces between words */
+      white-space: nowrap;
+    }
+
+    @keyframes wave {
+      0% { transform: translateY(0); }
+      25% { transform: translateY(-8px); }
+      50% { transform: translateY(0); }
+      75% { transform: translateY(8px); }
+      100% { transform: translateY(0); }
     }
 
     .letter {
@@ -42,21 +53,12 @@
       text-shadow: 1px 1px 2px black;
     }
 
-    @keyframes wave {
-      0%   { transform: translateY(0); }
-      25%  { transform: translateY(-8px); }
-      50%  { transform: translateY(0); }
-      75%  { transform: translateY(8px); }
-      100% { transform: translateY(0); }
-    }
-
-    /* Rainbow colors */
-    .letter:nth-child(6n+1) { color: #d100ff; }  /* Neon Purple */
-    .letter:nth-child(6n+2) { color: #a100ff; }  /* Violet */
-    .letter:nth-child(6n+3) { color: #6f00ff; }  /* Indigo */
-    .letter:nth-child(6n+4) { color: #4000ff; }  /* Electric Blue-Violet */
-    .letter:nth-child(6n+5) { color: #0074ff; }  /* Neon Blue */
-    .letter:nth-child(6n)   { color: #00e0ff; }  /* Bright Cyan-Blue */
+    .letter:nth-child(6n+1) { color: #d100ff; }
+    .letter:nth-child(6n+2) { color: #a100ff; }
+    .letter:nth-child(6n+3) { color: #6f00ff; }
+    .letter:nth-child(6n+4) { color: #4000ff; }
+    .letter:nth-child(6n+5) { color: #0074ff; }
+    .letter:nth-child(6n) { color: #00e0ff; }
 
     #controls {
       position: absolute;
@@ -97,7 +99,6 @@
       border-radius: 6px;
       padding: 6px 10px;
       width: 110px;
-      transition: border-color 0.2s, background-color 0.2s;
       font-size: 14px;
     }
 
@@ -106,45 +107,27 @@
       border-color: #00ccff;
       background-color: #2b2b2b;
     }
-        
   </style>
 </head>
 <body>
-  <script>
-    window.onload = () => {
-      const textEl = document.getElementById('waveText');
-      const text = textEl.textContent;
-      textEl.innerHTML = ''; // Clear original
-
-      // Split each character into span (including spaces)
-      text.split('').forEach((char, i) => {
-        const span = document.createElement('span');
-        span.className = 'letter';
-        span.textContent = char;
-        span.style.animationDelay = `${i * 0.1}s`;
-        textEl.appendChild(span);
-      });
-    };
-  </script>
-  <div id="banner">
-    <span id="waveText">Made with love for Reeves</span>
-  </div>
-  <div id="controls">
-  <div>
-    <label>Point A:</label>
-    Lat    <input id="latA" type="number" value="35" step="0.01">
-    Lon    <input id="lonA" type="number" value="20" step="0.01">
-  </div>
-  <div>
-    <label>Point B:</label>
-    Lat <input id="latB" type="number" value="26.1" step="0.01">
-    Lon <input id="lonB" type="number" value="-96.1" step="0.01">
-  </div>
-</div>
   <div id="title">The World of Klei</div>
+  <div id="banner"><span id="waveText">Made with love for Reeves</span></div>
+  <div id="controls">
+    <div>
+      <label>Point A:</label>
+      Lat    <input id="latA" type="number" value="35" step="0.01">
+      Lon    <input id="lonA" type="number" value="20" step="0.01">
+    </div>
+    <div>
+      <label>Point B:</label>
+      Lat <input id="latB" type="number" value="20" step="0.01">
+      Lon <input id="lonB" type="number" value="-90" step="0.01">
+    </div>
+  </div>
+
   <script type="module">
     import * as THREE from 'https://esm.sh/three@0.148.0';
-    import { OrbitControls } from 'https://esm.sh/three@0.148.0/examples/jsm/controls/OrbitControls';
+    import { OrbitControls } from 'https://esm.sh/three@0.148.0/examples/jsm/controls/OrbitControls.js';
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
@@ -154,26 +137,23 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
+    const RADIUS = 1.01;
+    let markerA, markerB, arc;
+
     const geometry = new THREE.SphereGeometry(1, 64, 64);
-    const texture = new THREE.TextureLoader().load('https://raw.githubusercontent.com/arlong2/papaya/refs/heads/master/img/klei.png'); // Must be in same folder
+    const texture = new THREE.TextureLoader().load('./klei.png');
     const material = new THREE.MeshStandardMaterial({ map: texture });
     const globe = new THREE.Mesh(geometry, material);
     scene.add(globe);
 
-    const light = new THREE.AmbientLight(0xffffff, 1);
-    scene.add(light);
+    scene.add(new THREE.AmbientLight(0xffffff, 1));
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-
-    // New: restrict interaction to stop pulling globe away
     controls.enablePan = false;
     controls.minDistance = 1.5;
     controls.maxDistance = 3;
-    controls.minPolarAngle = 0;
-    controls.maxPolarAngle = Math.PI;
-
 
     function animate() {
       requestAnimationFrame(animate);
@@ -182,16 +162,6 @@
     }
     animate();
 
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-    const RADIUS = 1.01;
-    let markerA, markerB, arc;
-
-    // Convert lat/lon to 3D position
     function latLongToVector3(lat, lon, radius) {
       const phi = (90 - lat) * (Math.PI / 180);
       const theta = (lon + 180) * (Math.PI / 180);
@@ -201,54 +171,180 @@
       return new THREE.Vector3(x, y, z);
     }
 
-    // Create flat arc between two points
-    function createFlatArc(startVec, endVec, segments = 128) {
-      const arcPoints = [];
-      for (let i = 0; i <= segments; i++) {
-        const t = i / segments;
-        const point = new THREE.Vector3().copy(startVec).lerp(endVec, t).normalize().multiplyScalar(RADIUS);
-        arcPoints.push(point);
-      }
-      return new THREE.BufferGeometry().setFromPoints(arcPoints);
+    function haversine(lat1, lon1, lat2, lon2) {
+      const toRad = x => (x * Math.PI) / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+      return 6371 * 2 * Math.asin(Math.sqrt(a));
     }
 
-    // Update markers + arc from input
+    function findOceanPath(start, end, isOcean) {
+      const step = 10;
+      const queue = [{ lat: start.lat, lon: start.lon, cost: 0, path: [] }];
+      const visited = new Set();
+
+      function hash(lat, lon) {
+        return `${lat.toFixed(2)}|${lon.toFixed(2)}`;
+      }
+
+      while (queue.length > 0) {
+        queue.sort((a, b) => a.cost + haversine(a.lat, a.lon, end.lat, end.lon) - (b.cost + haversine(b.lat, b.lon, end.lat, end.lon)));
+        const node = queue.shift();
+        const { lat, lon, path } = node;
+        const key = hash(lat, lon);
+        if (visited.has(key)) continue;
+        visited.add(key);
+
+        const newPath = [...path, { lat, lon }];
+        if (haversine(lat, lon, end.lat, end.lon) < 600) return newPath;
+
+        const directions = [
+          [step, 0], [-step, 0], [0, step], [0, -step],
+          [step, step], [-step, step], [step, -step], [-step, -step]
+        ];
+        for (const [dLat, dLon] of directions) {
+          const nLat = lat + dLat;
+          const nLon = lon + dLon;
+          if (nLat > 90 || nLat < -90) continue;
+          if (!isOcean(nLat, nLon)) continue;
+          const g = node.cost + haversine(lat, lon, nLat, nLon);
+          queue.push({ lat: nLat, lon: nLon, cost: g, path: newPath });
+        }
+        if (queue.length % 100 === 0) {
+          console.log("Still exploring:", lat.toFixed(2), lon.toFixed(2), "dist to end:", haversine(lat, lon, end.lat, end.lon));
+        }
+      }
+      return [];
+    }
+
+    const samplingCanvas = document.createElement('canvas');
+    const ctx = samplingCanvas.getContext('2d');
+    const mapImage = new Image();
+    mapImage.crossOrigin = 'anonymous';
+    mapImage.src = './klei.png';
+
+    mapImage.onload = () => {
+      samplingCanvas.width = mapImage.width;
+      samplingCanvas.height = mapImage.height;
+      ctx.drawImage(mapImage, 0, 0);
+      updateArcFromInputs();
+    };
+
+    function isOcean(lat, lon) {
+      if (!ctx) return false;
+
+      const x = Math.floor(((lon + 180) / 360) * samplingCanvas.width);
+      const y = Math.floor(((90 - lat) / 180) * samplingCanvas.height);
+
+      const [r, g, b] = ctx.getImageData(x, y, 1, 1).data;
+
+      // ✅ Matches your textured water style
+      const isDarkOcean = r >= 40 && r <= 100 &&
+                          g >= 60 && g <= 120 &&
+                          b >= 70 && b <= 150;
+
+      const isCoolColor = b >= g && b >= r;
+
+      return isDarkOcean //&& isCoolColor;
+    }
+
+    function debugOceanGrid() {
+      const dotMat = new THREE.MeshBasicMaterial({ color: 0x2266ff });
+      const dotGeo = new THREE.SphereGeometry(0.004, 6, 6);
+
+      for (let lat = -80; lat <= 80; lat += 10) {
+        for (let lon = -180; lon <= 180; lon += 10) {
+          if (isOcean(lat, lon)) {
+            const marker = new THREE.Mesh(dotGeo, dotMat);
+            marker.position.copy(latLongToVector3(lat, lon, RADIUS));
+            scene.add(marker);
+          }
+        }
+      }
+    }
+
     function updateArcFromInputs() {
       const latA = parseFloat(document.getElementById('latA').value);
       const lonA = parseFloat(document.getElementById('lonA').value);
       const latB = parseFloat(document.getElementById('latB').value);
       const lonB = parseFloat(document.getElementById('lonB').value);
 
-      const pointA = latLongToVector3(latA, lonA, RADIUS);
-      const pointB = latLongToVector3(latB, lonB, RADIUS);
+      if (!ctx || mapImage.width === 0) return;
 
       if (arc) scene.remove(arc);
       if (markerA) scene.remove(markerA);
       if (markerB) scene.remove(markerB);
+      let oceanPath = findOceanPath({ lat: latA, lon: lonA }, { lat: latB, lon: lonB }, isOcean);
+      if (!oceanPath || oceanPath.length < 2) {
+        console.warn("Ocean path failed. Drawing straight line instead.");
+        oceanPath = [
+          { lat: latA, lon: lonA },
+          { lat: latB, lon: lonB }
+        ];
+      }
 
-      // Line
-      const arcGeometry = createFlatArc(pointA, pointB);
+      const arcPoints = [];
+
+      // interpolate between each oceanPath point
+      for (let i = 0; i < oceanPath.length - 1; i++) {
+        const a = oceanPath[i];
+        const b = oceanPath[i + 1];
+
+        const start = latLongToVector3(a.lat, a.lon, RADIUS);
+        const end = latLongToVector3(b.lat, b.lon, RADIUS);
+
+        const steps = 8;
+        for (let j = 0; j <= steps; j++) {
+          const t = j / steps;
+          const point = new THREE.Vector3().copy(start).lerp(end, t).normalize().multiplyScalar(RADIUS);
+          arcPoints.push(point);
+        }
+      }
+
+      // ✅ Force-connect to exact marker endpoints
+      arcPoints[0] = latLongToVector3(oceanPath[0].lat, oceanPath[0].lon, RADIUS);
+      arcPoints[arcPoints.length - 1] = latLongToVector3(oceanPath[oceanPath.length - 1].lat, oceanPath[oceanPath.length - 1].lon, RADIUS);
+      arcPoints.push(latLongToVector3(latB, lonB, RADIUS));
+
+      const arcGeometry = new THREE.BufferGeometry().setFromPoints(arcPoints);
       arc = new THREE.Line(arcGeometry, new THREE.LineBasicMaterial({ color: 0xFFD700 }));
       scene.add(arc);
 
-      // Markers
-      const markerMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      const markerGeo = new THREE.SphereGeometry(0.015, 16, 16);
-      markerA = new THREE.Mesh(markerGeo, markerMat);
-      markerA.position.copy(pointA);
+      const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const markerGeometry = new THREE.SphereGeometry(0.015, 16, 16);
+
+      markerA = new THREE.Mesh(markerGeometry, markerMaterial);
+      markerA.position.copy(latLongToVector3(latA, lonA, RADIUS));
       scene.add(markerA);
-      markerB = new THREE.Mesh(markerGeo, markerMat);
-      markerB.position.copy(pointB);
+
+      markerB = new THREE.Mesh(markerGeometry, markerMaterial);
+      markerB.position.copy(latLongToVector3(latB, lonB, RADIUS));
       scene.add(markerB);
+      console.log("Ocean path length:", oceanPath.length);
+      // debugOceanGrid();
+      if (oceanPath.length < 2) {
+        console.warn("Ocean path failed. Drawing straight line instead.");
+        arcPoints.push({ lat: latA, lon: lonA }, { lat: latB, lon: lonB });
+      }
     }
 
-    // Event listeners for controls
-    ['latA', 'lonA', 'latB', 'lonB'].forEach(id => {
-      document.getElementById(id).addEventListener('input', updateArcFromInputs);
-    });
+    window.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('#latA, #lonA, #latB, #lonB').forEach(input => {
+        input.addEventListener('input', updateArcFromInputs);
+      });
 
-    // Initial draw
-    updateArcFromInputs();
+      const waveText = document.getElementById('waveText');
+      const wave = waveText.textContent;
+      waveText.innerHTML = '';
+      wave.split('').forEach((char, i) => {
+        const span = document.createElement('span');
+        span.className = 'letter';
+        span.textContent = char;
+        span.style.animationDelay = `${i * 0.1}s`;
+        waveText.appendChild(span);
+      });
+    });
   </script>
 </body>
 </html>
