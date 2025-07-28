@@ -222,7 +222,7 @@
     const ctx = samplingCanvas.getContext('2d');
     const mapImage = new Image();
     mapImage.crossOrigin = 'anonymous';
-    mapImage.src = 'https://papaya.party/img/klei-2.png';
+    mapImage.src = 'https://papaya.party/img/klei-3.png';
 
     mapImage.onload = () => {
       samplingCanvas.width = mapImage.width;
@@ -246,7 +246,7 @@
 
       const isCoolColor = b >= g && b >= r;
 
-      return b >= 200 //&& isCoolColor;
+      return b >= 180 //&& isCoolColor;
     }
 
     function debugOceanGrid() {
