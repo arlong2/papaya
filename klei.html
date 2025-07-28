@@ -141,7 +141,7 @@
     let markerA, markerB, arc;
 
     const geometry = new THREE.SphereGeometry(1, 64, 64);
-    const texture = new THREE.TextureLoader().load('./klei.png');
+    const texture = new THREE.TextureLoader().load('https://papaya.party/img/klei.png');
     const material = new THREE.MeshStandardMaterial({ map: texture });
     const globe = new THREE.Mesh(geometry, material);
     scene.add(globe);
@@ -222,7 +222,7 @@
     const ctx = samplingCanvas.getContext('2d');
     const mapImage = new Image();
     mapImage.crossOrigin = 'anonymous';
-    mapImage.src = './klei.png';
+    mapImage.src = 'https://papaya.party/img/klei.png';
 
     mapImage.onload = () => {
       samplingCanvas.width = mapImage.width;
