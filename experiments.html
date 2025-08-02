@@ -33,16 +33,18 @@
             border-radius: 10px;
             overflow: hidden;
             transition: transform 0.2s, background 0.2s;
-            min-width: 250px;
+            width: 260px;
+            height: 260px;
         }
         .tile:hover {
             transform: scale(1.05);
             background: rgba(255, 255, 255, 0.2);
         }
         .tile img {
-            width: 100%;
+            width: 260px;
             height: 260px;
             object-fit: cover;
+            display: block;
         }
         .label {
             position: absolute;
@@ -52,7 +54,7 @@
             color: white;
             padding: 5px 10px;
             font-size: 0.8em;
-            border-radius: 3px;
+            border-radius: 0px;
         }
         .overlay {
             position: fixed;
@@ -154,17 +156,23 @@
     <div class="container" id="container">
         <a href="/bingo.html">
         <div class="tile">
-            <img src="https://raw.githubusercontent.com/arlong2/papaya/master/bingo.png" alt="Coworker Bingo">
+            <img src="https://papaya.party/bingo.png" alt="Coworker Bingo">
             <div class="label">ChatGPT 3.5</div>
         </div>
         </a>
         <a href="/connections.html">
         <div class="tile">
-            <img src="https://raw.githubusercontent.com/arlong2/papaya/master/conections.png" alt="Connections">
+            <img src="https://papaya.party/conections.png" alt="Connections">
             <div class="label">ChatGPT 4o</div>
         </div>
         </a>
-    
+        </a>
+        <a href="/klei.html">
+        <div class="tile">
+            <img src="https://papaya.party/klei-fun.png" alt="Connections">
+            <div class="label">ChatGPT 4o</div>
+        </div>
+        </a>
         <!-- Add more tiles as needed -->
     </div>
     <script>
