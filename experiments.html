@@ -26,6 +26,7 @@
             z-index: 2;
             opacity: 0;
             transition: opacity 1s ease-in-out;
+            flex-wrap: wrap; /* ✅ Allow wrapping */
         }
         .tile {
             position: relative;
@@ -53,8 +54,47 @@
             background: rgba(0, 0, 0, 0.7);
             color: white;
             padding: 5px 10px;
-            font-size: 0.8em;
-            border-radius: 0px;
+            font-size: 0.9em;
+            border-radius: 5px;
+            max-width: 80%;
+            text-align: right;
+            word-wrap: break-word;
+        }
+
+        /* Make it bigger and centered on small screens */
+        @media (max-width: 600px) {
+            .label {
+                top: auto;
+                bottom: 10px;
+                right: 50%;
+                transform: translateX(50%);
+                font-size: 1.1em;
+                padding: 8px 12px;
+                border-radius: 8px;
+                text-align: center;
+                max-width: 60%;
+            }
+        }
+        /* Mobile: 2x3 grid */
+        @media (max-width: 600px) {
+            .container {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                grid-auto-rows: auto;
+                justify-items: center;
+                gap: 15px;
+            }
+
+            .tile {
+                width: 45vw;
+                height: 45vw;
+            }
+
+            .tile img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
         }
         .overlay {
             position: fixed;
