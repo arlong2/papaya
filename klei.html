@@ -62,22 +62,31 @@
 
     #controls {
       position: absolute;
-      bottom: 70px;
+      bottom: 120px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(30, 30, 30, 0.9);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 12px;
-      padding: 12px 20px;
+      padding: 0;
       color: white;
       font-family: 'Segoe UI', Roboto, sans-serif;
       font-size: 14px;
-      z-index: 100;
-      display: flex;
+      z-index: 99;
+      display: none;
       flex-direction: column;
-      gap: 10px;
       box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
       backdrop-filter: blur(10px);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      max-height: 0;
+      opacity: 0;
+    }
+
+    #controls.visible {
+      max-height: 200px;
+      opacity: 1;
+      padding: 12px 20px;
     }
 
     .control-group {
@@ -107,21 +116,56 @@
       border-color: #00ccff;
       background-color: #2b2b2b;
     }
+
+    #toggleControls {
+      position: absolute;
+      bottom: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(30, 30, 30, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 8px 16px;
+      color: white;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      z-index: 100;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+      transition: all 0.2s ease;
+    }
+
+    #toggleControls:hover {
+      background: rgba(50, 50, 50, 0.9);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateX(-50%) translateY(-2px);
+    }
+
+    .control-content {
+      padding: 12px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
   </style>
 </head>
 <body>
   <div id="title">The World of Klei</div>
   <div id="banner"><span id="waveText">Made with love for Reeves</span></div>
+  <button id="toggleControls">Show Coordinates</button>
   <div id="controls">
-    <div>
-      <label>Point A:</label>
-      Lat    <input id="latA" type="number" value="35" step="0.01">
-      Lon    <input id="lonA" type="number" value="20" step="0.01">
-    </div>
-    <div>
-      <label>Point B:</label>
-      Lat <input id="latB" type="number" value="21" step="0.01">
-      Lon <input id="lonB" type="number" value="-98" step="0.01">
+    <div class="control-content">
+      <div>
+        <label>Point A:</label>
+        Lat    <input id="latA" type="number" value="35" step="0.01">
+        Lon    <input id="lonA" type="number" value="20" step="0.01">
+      </div>
+      <div>
+        <label>Point B:</label>
+        Lat <input id="latB" type="number" value="21" step="0.01">
+        Lon <input id="lonB" type="number" value="-98" step="0.01">
+      </div>
     </div>
   </div>
 
@@ -465,6 +509,29 @@
     window.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('#latA, #lonA, #latB, #lonB').forEach(input => {
         input.addEventListener('input', updateArcFromInputs);
+      });
+
+      // Toggle controls functionality
+      const toggleButton = document.getElementById('toggleControls');
+      const controls = document.getElementById('controls');
+      let controlsVisible = false;
+
+      toggleButton.addEventListener('click', () => {
+        controlsVisible = !controlsVisible;
+        if (controlsVisible) {
+          controls.style.display = 'flex';
+          // Small delay to ensure display is set before adding class
+          setTimeout(() => controls.classList.add('visible'), 10);
+        } else {
+          controls.classList.remove('visible');
+          // Wait for animation to complete before hiding
+          setTimeout(() => {
+            if (!controlsVisible) {
+              controls.style.display = 'none';
+            }
+          }, 300);
+        }
+        toggleButton.textContent = controlsVisible ? 'Hide Coordinates' : 'Show Coordinates';
       });
 
       const waveText = document.getElementById('waveText');
