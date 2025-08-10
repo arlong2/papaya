@@ -223,6 +223,8 @@
     let markerA, markerB, arc, distanceText;
     let shipMaterial = null;
     let raycaster, mouse, isDragging = false, draggedMarker = null;
+    let arcUniforms = null;
+    const clock = new THREE.Clock();
 
     const geometry = new THREE.SphereGeometry(1, 64, 64);
     const texture = new THREE.TextureLoader().load('https://papaya.party/img/klei.png');
@@ -242,51 +244,75 @@
     // Initialize raycaster and mouse for dragging
     raycaster = new THREE.Raycaster();
     mouse = new THREE.Vector2();
+    raycaster.params.Sprite.threshold = 1.5;
 
     function animate() {
       requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      if (arcUniforms) {
+        arcUniforms.time.value += delta;
+      }
       controls.update();
       renderer.render(scene, camera);
     }
     animate();
 
+    // Helper to pick marker under mouse
+    function getMarkerUnderMouse() {
+      // Cast against the whole scene and pick the first sprite marked as a marker
+      const hits = raycaster.intersectObjects(scene.children, true);
+      for (let i = 0; i < hits.length; i++) {
+        const obj = hits[i].object;
+        if (obj && obj.isSprite && obj.userData && obj.userData.isMarker) {
+          return obj;
+        }
+      }
+      return null;
+    }
+
     // Mouse event handlers for dragging
     function onMouseDown(event) {
       event.preventDefault();
-      
       mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-      
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects([markerA, markerB]);
-      
-      if (intersects.length > 0) {
+      const hit = getMarkerUnderMouse();
+      // If hovering a marker, stop controls from interpreting this as a rotate start
+      if (getMarkerUnderMouse()) {
+        event.stopPropagation();
+      }
+      if (hit) {
         isDragging = true;
-        draggedMarker = intersects[0].object;
+        draggedMarker = hit;
         controls.enabled = false;
+        renderer.domElement.style.cursor = 'grabbing';
+        // NOTE: Do not snap the marker to the globe here; wait for onMouseMove
       }
     }
 
     function onMouseMove(event) {
-      if (!isDragging || !draggedMarker) return;
-      
       mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-      
       raycaster.setFromCamera(mouse, camera);
+
+      if (!isDragging) {
+        const over = getMarkerUnderMouse();
+        renderer.domElement.style.cursor = over ? 'grab' : 'default';
+        return; // only move the globe point when actively dragging
+      }
+
+      // Only runs if dragging:
+      if (!draggedMarker) return;
+      event.preventDefault();
       const intersects = raycaster.intersectObject(globe);
-      
       if (intersects.length > 0) {
         const point = intersects[0].point;
         const normalizedPoint = point.normalize();
-        
         // Update marker position
         draggedMarker.position.copy(normalizedPoint.multiplyScalar(RADIUS));
-        
         // Convert 3D position back to lat/lon using the same coordinate system as latLongToVector3
         const lat = 90 - Math.acos(normalizedPoint.y / RADIUS) * (180 / Math.PI);
         const lon = Math.atan2(normalizedPoint.z, -normalizedPoint.x) * (180 / Math.PI) - 180;
-        
         // Update input fields
         if (draggedMarker === markerA) {
           document.getElementById('latA').value = lat.toFixed(2);
@@ -303,7 +329,7 @@
         isDragging = false;
         draggedMarker = null;
         controls.enabled = true;
-        
+        renderer.domElement.style.cursor = 'default';
         // Update the path after dragging is complete
         updateArcFromInputs();
       }
@@ -313,6 +339,12 @@
     renderer.domElement.addEventListener('mousedown', onMouseDown);
     renderer.domElement.addEventListener('mousemove', onMouseMove);
     renderer.domElement.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('mouseleave', onMouseUp);
+    // Pointer events for wider device support
+    renderer.domElement.addEventListener('pointerdown', onMouseDown);
+    renderer.domElement.addEventListener('pointermove', onMouseMove);
+    renderer.domElement.addEventListener('pointerup', onMouseUp);
 
     function latLongToVector3(lat, lon, radius) {
       const phi = (90 - lat) * (Math.PI / 180);
@@ -413,6 +445,7 @@
       }
     }
 
+
     // Create a golden ship texture without external assets
     function createGoldenShipTexture(size = 256) {
       const canvas = document.createElement('canvas');
@@ -506,6 +539,63 @@
       return texture;
     }
 
+    // === Pathfinding helpers ===
+    // Smooth a path of lat/lon points using Chaikin's algorithm
+    function smoothPath(path, iterations = 2) {
+      let result = path.slice();
+      for (let iter = 0; iter < iterations; iter++) {
+        let newPath = [];
+        newPath.push(result[0]);
+        for (let i = 0; i < result.length - 1; i++) {
+          const a = result[i], b = result[i + 1];
+          const lat1 = a.lat, lon1 = a.lon, lat2 = b.lat, lon2 = b.lon;
+          newPath.push({
+            lat: lat1 * 0.75 + lat2 * 0.25,
+            lon: lon1 * 0.75 + lon2 * 0.25
+          });
+          newPath.push({
+            lat: lat1 * 0.25 + lat2 * 0.75,
+            lon: lon1 * 0.25 + lon2 * 0.75
+          });
+        }
+        newPath.push(result[result.length - 1]);
+        result = newPath;
+      }
+      return result;
+    }
+
+    // Convert array of {lat,lon} to array of Vector3 (on the globe)
+    function pathToVectors(path, radius = RADIUS) {
+      return path.map(({ lat, lon }) => latLongToVector3(lat, lon, radius));
+    }
+
+    // Slerp between two lat/lon points on a sphere
+    function slerpOnSphere(a, b, t, radius) {
+      // Convert to Cartesian
+      const va = latLongToVector3(a.lat, a.lon, radius);
+      const vb = latLongToVector3(b.lat, b.lon, radius);
+      return va.clone().lerp(vb, t).normalize().multiplyScalar(radius);
+    }
+
+    // Smooth path of Vector3s using Chaikin's algorithm, preserving endpoints
+    function smoothOnSphere(points, iterations = 2, radius = RADIUS) {
+      let result = points.slice();
+      for (let iter = 0; iter < iterations; iter++) {
+        let newPath = [];
+        newPath.push(result[0]);
+        for (let i = 0; i < result.length - 1; i++) {
+          const a = result[i], b = result[i + 1];
+          // Weighted averages, then project to sphere
+          let p1 = a.clone().multiplyScalar(0.75).add(b.clone().multiplyScalar(0.25)).normalize().multiplyScalar(radius);
+          let p2 = a.clone().multiplyScalar(0.25).add(b.clone().multiplyScalar(0.75)).normalize().multiplyScalar(radius);
+          newPath.push(p1, p2);
+        }
+        newPath.push(result[result.length - 1]);
+        result = newPath;
+      }
+      return result;
+    }
+
     function updateArcFromInputs() {
       const latA = parseFloat(document.getElementById('latA').value);
       const lonA = parseFloat(document.getElementById('lonA').value);
@@ -524,9 +614,9 @@
       if (markerA) scene.remove(markerA);
       if (markerB) scene.remove(markerB);
       if (distanceText) scene.remove(distanceText);
+
+      // --- Ocean path validation + fallback ---
       let oceanPath = findOceanPath({ lat: latA, lon: lonA }, { lat: latB, lon: lonB }, isOcean);
-      console.log("Ocean path found:", oceanPath ? oceanPath.length : 0, "points");
-      
       let isFallbackPath = false;
       if (!oceanPath || oceanPath.length === 0) {
         console.warn("Ocean path failed. Drawing straight line instead.");
@@ -537,63 +627,124 @@
         isFallbackPath = true;
       }
 
-      const arcPoints = [];
-
-      // interpolate between each oceanPath point
-      for (let i = 0; i < oceanPath.length - 1; i++) {
-        const a = oceanPath[i];
-        const b = oceanPath[i + 1];
-
-        const start = latLongToVector3(a.lat, a.lon, RADIUS);
-        const end = latLongToVector3(b.lat, b.lon, RADIUS);
-
-        const steps = 8;
-        for (let j = 0; j <= steps; j++) {
-          const t = j / steps;
-          const point = new THREE.Vector3().copy(start).lerp(end, t).normalize().multiplyScalar(RADIUS);
-          arcPoints.push(point);
-        }
-      }
-
-      // ✅ Force-connect to exact marker endpoints
-      arcPoints[0] = latLongToVector3(oceanPath[0].lat, oceanPath[0].lon, RADIUS);
-      arcPoints[arcPoints.length - 1] = latLongToVector3(oceanPath[oceanPath.length - 1].lat, oceanPath[oceanPath.length - 1].lon, RADIUS);
-      arcPoints.push(latLongToVector3(latB, lonB, RADIUS));
-
-      const arcGeometry = new THREE.BufferGeometry().setFromPoints(arcPoints);
-      
+      // Fallback: draw a red dashed line if not valid ocean path
       if (isFallbackPath) {
-        // Red dashed line for fallback path
-        arc = new THREE.Line(arcGeometry, new THREE.LineDashedMaterial({ 
-          color: 0xFF0000,
-          dashSize: 0.1,
-          gapSize: 0.05
-        }));
-        arc.computeLineDistances(); // Required for dashed lines
+        // Fallback: draw a red dashed line following the globe surface (great-circle approximation)
+        {
+          const startV = latLongToVector3(latA, lonA, RADIUS);
+          const endV   = latLongToVector3(latB, lonB, RADIUS);
+          const vA = startV.clone().normalize();
+          const vB = endV.clone().normalize();
+          const segments = 128; // smoother arc along the surface
+          const points = [];
+          for (let i = 0; i <= segments; i++) {
+            const t = i / segments;
+            // approximate spherical interpolation by normalizing the lerp result
+            const p = vA.clone().lerp(vB, t).normalize().multiplyScalar(RADIUS);
+            points.push(p);
+          }
+          const geom = new THREE.BufferGeometry().setFromPoints(points);
+          const mat  = new THREE.LineDashedMaterial({ color: 0xff0000, dashSize: 0.07, gapSize: 0.035 });
+          arc = new THREE.Line(geom, mat);
+          arc.computeLineDistances();
+          scene.add(arc);
+        }
       } else {
-        // Golden solid line for ocean path
-        arc = new THREE.Line(arcGeometry, new THREE.LineBasicMaterial({ color: 0xFFD700 }));
+        // Valid ocean path: rebuild arcPoints with exact endpoints and interior samples
+        const rebuilt = [];
+        rebuilt.push(latLongToVector3(latA, lonA, RADIUS));
+        for (let i = 0; i < oceanPath.length - 1; i++) {
+          const a = oceanPath[i];
+          const b = oceanPath[i + 1];
+          const segKm = haversine(a.lat, a.lon, b.lat, b.lon);
+          const steps = Math.max(6, Math.ceil(segKm / 120));
+          for (let j = 1; j < steps; j++) { // start at 1 to avoid duplicating anchors
+            const t = j / steps;
+            rebuilt.push(slerpOnSphere(a, b, t, RADIUS));
+          }
+        }
+        rebuilt.push(latLongToVector3(latB, lonB, RADIUS));
+
+        // Smooth corners (preserves endpoints)
+        const controlPoints = smoothOnSphere(rebuilt, 2, RADIUS);
+
+        const curve = new THREE.CatmullRomCurve3(controlPoints, false, 'centripetal', 0.5);
+        const tubularSegments = Math.max(200, controlPoints.length * 6);
+        const tubeRadius = 0.003;
+        const radialSegments = 8;
+        const closed = false;
+        const tubeGeometry = new THREE.TubeGeometry(curve, tubularSegments, tubeRadius, radialSegments, closed);
+        // Shader for golden base with traveling glow
+        arcUniforms = {
+          time: { value: 0 },
+          baseColor: { value: new THREE.Color(0xC9A227) },   // rich gold base
+          glowColor: { value: new THREE.Color(0xFFD700) },   // bright gold glow
+          glowWidth: { value: 0.05 },                         // narrower glow band (0..1 along length)
+          glowStrength: { value: 1.5 },                       // additive intensity of the glow
+          speed: { value: 0.45 }                              // one-way movement speed
+        };
+        const vertexShader = `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `;
+        const fragmentShader = `
+          precision mediump float;
+          varying vec2 vUv;
+          uniform float time;
+          uniform vec3 baseColor;
+          uniform vec3 glowColor;
+          uniform float glowWidth;
+          uniform float glowStrength;
+          uniform float speed;
+          void main() {
+            vec3 color = baseColor;
+            float center = fract(time * speed);
+            float dist = abs(vUv.y - center);
+            float sigma = glowWidth * 0.5;
+            float glow = exp(- (dist * dist) / (2.0 * sigma * sigma));
+            color += glowColor * glow * glowStrength;
+            float rim = smoothstep(0.5, 0.0, abs(vUv.x - 0.5));
+            color += glowColor * 0.2 * rim;
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `;
+        const arcMaterial = new THREE.ShaderMaterial({
+          uniforms: arcUniforms,
+          vertexShader,
+          fragmentShader,
+          transparent: true,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        });
+        arc = new THREE.Mesh(tubeGeometry, arcMaterial);
+        scene.add(arc);
       }
-      
-      scene.add(arc);
-      console.log("Arc created with", arcPoints.length, "points", isFallbackPath ? "(fallback)" : "(ocean path)");
 
       // Use a procedurally drawn golden ship sprite (no external asset)
       if (!shipMaterial) {
         const shipTexture = createGoldenShipTexture(256);
-        shipMaterial = new THREE.SpriteMaterial({ map: shipTexture, transparent: true, depthTest: true, depthWrite: false });
+        shipMaterial = new THREE.SpriteMaterial({ map: shipTexture, transparent: true, depthTest: false, depthWrite: false });
       }
-
       markerA = new THREE.Sprite(shipMaterial);
       markerA.position.copy(latLongToVector3(latA, lonA, RADIUS));
-      markerA.scale.set(0.08, 0.08, 1);
+      markerA.scale.set(0.12, 0.12, 1);
+      markerA.center.set(0.5, 0.5);
+      markerA.userData.isMarker = true;
+      markerA.frustumCulled = false;
+      markerA.renderOrder = 10;
       scene.add(markerA);
-
       markerB = new THREE.Sprite(shipMaterial);
       markerB.position.copy(latLongToVector3(latB, lonB, RADIUS));
-      markerB.scale.set(0.08, 0.08, 1);
+      markerB.scale.set(0.12, 0.12, 1);
+      markerB.center.set(0.5, 0.5);
+      markerB.userData.isMarker = true;
+      markerB.frustumCulled = false;
+      markerB.renderOrder = 10;
       scene.add(markerB);
-      
+
       // Calculate total distance of the path
       let totalDistance = 0;
       for (let i = 0; i < oceanPath.length - 1; i++) {
@@ -601,19 +752,15 @@
         const b = oceanPath[i + 1];
         totalDistance += haversine(a.lat, a.lon, b.lat, b.lon);
       }
-      console.log("Total distance calculated:", totalDistance.toFixed(0), "km");
-      
       // Create distance text bubble
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
       canvas.width = 512;
       canvas.height = 128;
-      
       // Create bubble background
       context.fillStyle = 'rgba(0, 0, 0, 0.8)';
       context.strokeStyle = '#FFD700';
       context.lineWidth = 4;
-      
       // Draw rounded rectangle manually
       const x = 20, y = 20, width = canvas.width - 40, height = canvas.height - 40, radius = 30;
       context.beginPath();
@@ -629,7 +776,6 @@
       context.closePath();
       context.fill();
       context.stroke();
-      
       // Add text
       context.fillStyle = '#FFD700';
       context.font = 'bold 60px Arial';
@@ -637,25 +783,19 @@
       context.textBaseline = 'middle';
       const distanceString = `${totalDistance.toFixed(0)} km`;
       context.fillText(distanceString, canvas.width / 2, canvas.height / 2);
-      
       // Create texture and material
       const texture = new THREE.CanvasTexture(canvas);
-      const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
-      distanceText = new THREE.Sprite(material);
-      
+      const mat = new THREE.SpriteMaterial({ map: texture, transparent: true });
+      distanceText = new THREE.Sprite(mat);
       // Position the bubble at the midpoint of the path
       const midIndex = Math.floor(oceanPath.length / 2);
       const midPoint = oceanPath[midIndex];
       const midPosition = latLongToVector3(midPoint.lat, midPoint.lon, RADIUS + 0.05);
       distanceText.position.copy(midPosition);
       distanceText.scale.set(0.2, 0.05, 1);
-      
       scene.add(distanceText);
-      
       console.log("Ocean path length:", oceanPath.length);
       console.log("Total distance:", totalDistance.toFixed(0), "km");
-      //debugOceanGrid();
-      
     }
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -731,3 +871,4 @@
   </script>
 </body>
 </html>
+z
