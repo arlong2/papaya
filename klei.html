@@ -138,7 +138,7 @@
     document.body.appendChild(renderer.domElement);
 
     const RADIUS = 1.01;
-    let markerA, markerB, arc;
+    let markerA, markerB, arc, distanceText;
 
     const geometry = new THREE.SphereGeometry(1, 64, 64);
     const texture = new THREE.TextureLoader().load('https://papaya.party/img/klei.png');
@@ -267,12 +267,21 @@
       const latB = parseFloat(document.getElementById('latB').value);
       const lonB = parseFloat(document.getElementById('lonB').value);
 
-      if (!ctx || mapImage.width === 0) return;
+      console.log("Updating arc with coordinates:", latA, lonA, latB, lonB);
+      console.log("Context available:", !!ctx, "Image width:", mapImage.width);
+
+      if (!ctx || mapImage.width === 0) {
+        console.warn("Context or image not ready, skipping update");
+        return;
+      }
 
       if (arc) scene.remove(arc);
       if (markerA) scene.remove(markerA);
       if (markerB) scene.remove(markerB);
+      if (distanceText) scene.remove(distanceText);
       let oceanPath = findOceanPath({ lat: latA, lon: lonA }, { lat: latB, lon: lonB }, isOcean);
+      console.log("Ocean path found:", oceanPath ? oceanPath.length : 0, "points");
+      
       if (!oceanPath || oceanPath.length < 2) {
         console.warn("Ocean path failed. Drawing straight line instead.");
         oceanPath = [
@@ -307,6 +316,7 @@
       const arcGeometry = new THREE.BufferGeometry().setFromPoints(arcPoints);
       arc = new THREE.Line(arcGeometry, new THREE.LineBasicMaterial({ color: 0xFFD700 }));
       scene.add(arc);
+      console.log("Arc created with", arcPoints.length, "points");
 
       const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
       const markerGeometry = new THREE.SphereGeometry(0.015, 16, 16);
@@ -318,7 +328,67 @@
       markerB = new THREE.Mesh(markerGeometry, markerMaterial);
       markerB.position.copy(latLongToVector3(latB, lonB, RADIUS));
       scene.add(markerB);
+      
+      // Calculate total distance of the path
+      let totalDistance = 0;
+      for (let i = 0; i < oceanPath.length - 1; i++) {
+        const a = oceanPath[i];
+        const b = oceanPath[i + 1];
+        totalDistance += haversine(a.lat, a.lon, b.lat, b.lon);
+      }
+      console.log("Total distance calculated:", totalDistance.toFixed(0), "km");
+      
+      // Create distance text bubble
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      canvas.width = 512;
+      canvas.height = 128;
+      
+      // Create bubble background
+      context.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      context.strokeStyle = '#FFD700';
+      context.lineWidth = 4;
+      
+      // Draw rounded rectangle manually
+      const x = 20, y = 20, width = canvas.width - 40, height = canvas.height - 40, radius = 30;
+      context.beginPath();
+      context.moveTo(x + radius, y);
+      context.lineTo(x + width - radius, y);
+      context.quadraticCurveTo(x + width, y, x + width, y + radius);
+      context.lineTo(x + width, y + height - radius);
+      context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      context.lineTo(x + radius, y + height);
+      context.quadraticCurveTo(x, y + height, x, y + height - radius);
+      context.lineTo(x, y + radius);
+      context.quadraticCurveTo(x, y, x + radius, y);
+      context.closePath();
+      context.fill();
+      context.stroke();
+      
+      // Add text
+      context.fillStyle = '#FFD700';
+      context.font = 'bold 60px Arial';
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      const distanceString = `${totalDistance.toFixed(0)} km`;
+      context.fillText(distanceString, canvas.width / 2, canvas.height / 2);
+      
+      // Create texture and material
+      const texture = new THREE.CanvasTexture(canvas);
+      const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+      distanceText = new THREE.Sprite(material);
+      
+      // Position the bubble at the midpoint of the path
+      const midIndex = Math.floor(oceanPath.length / 2);
+      const midPoint = oceanPath[midIndex];
+      const midPosition = latLongToVector3(midPoint.lat, midPoint.lon, RADIUS + 0.05);
+      distanceText.position.copy(midPosition);
+      distanceText.scale.set(0.2, 0.05, 1);
+      
+      scene.add(distanceText);
+      
       console.log("Ocean path length:", oceanPath.length);
+      console.log("Total distance:", totalDistance.toFixed(0), "km");
       //debugOceanGrid();
       
     }
