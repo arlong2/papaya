@@ -221,6 +221,7 @@
 
     const RADIUS = 1.01;
     let markerA, markerB, arc, distanceText;
+    let shipMaterial = null;
     let raycaster, mouse, isDragging = false, draggedMarker = null;
 
     const geometry = new THREE.SphereGeometry(1, 64, 64);
@@ -412,6 +413,99 @@
       }
     }
 
+    // Create a golden ship texture without external assets
+    function createGoldenShipTexture(size = 256) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      // Clear
+      ctx.clearRect(0, 0, size, size);
+
+      // Helpers
+      const cx = size / 2;
+      const baseY = size * 0.70;
+
+      // Gold gradients
+      const goldHull = ctx.createLinearGradient(0, 0, size, 0);
+      goldHull.addColorStop(0, '#8a6f00');
+      goldHull.addColorStop(0.3, '#b99100');
+      goldHull.addColorStop(0.6, '#ffd34d');
+      goldHull.addColorStop(1, '#8a6f00');
+
+      const goldSail = ctx.createLinearGradient(0, 0, 0, size);
+      goldSail.addColorStop(0, '#fff3b0');
+      goldSail.addColorStop(1, '#d8b400');
+
+      const outline = '#5c4a00';
+
+      // Draw hull
+      ctx.beginPath();
+      ctx.moveTo(size * 0.18, baseY);
+      ctx.lineTo(size * 0.82, baseY);
+      ctx.lineTo(size * 0.70, baseY - size * 0.10);
+      ctx.lineTo(size * 0.30, baseY - size * 0.10);
+      ctx.closePath();
+      ctx.fillStyle = goldHull;
+      ctx.fill();
+      ctx.lineWidth = Math.max(1, size * 0.01);
+      ctx.strokeStyle = outline;
+      ctx.stroke();
+
+      // Draw mast
+      const mastH = size * 0.42;
+      const mastW = Math.max(2, size * 0.02);
+      ctx.fillStyle = goldHull;
+      ctx.fillRect(cx - mastW / 2, baseY - mastH, mastW, mastH);
+      ctx.strokeRect(cx - mastW / 2, baseY - mastH, mastW, mastH);
+
+      // Draw large sail (left)
+      ctx.beginPath();
+      ctx.moveTo(cx - mastW / 2, baseY - mastH + size * 0.02);
+      ctx.lineTo(cx - size * 0.28, baseY - mastH * 0.15);
+      ctx.lineTo(cx - mastW / 2, baseY - size * 0.12);
+      ctx.closePath();
+      ctx.fillStyle = goldSail;
+      ctx.fill();
+      ctx.strokeStyle = outline;
+      ctx.stroke();
+
+      // Draw small sail (right)
+      ctx.beginPath();
+      ctx.moveTo(cx + mastW / 2, baseY - mastH * 0.45);
+      ctx.lineTo(cx + size * 0.22, baseY - mastH * 0.25);
+      ctx.lineTo(cx + mastW / 2, baseY - size * 0.30);
+      ctx.closePath();
+      ctx.fillStyle = goldSail;
+      ctx.fill();
+      ctx.stroke();
+
+      // Flag
+      ctx.beginPath();
+      ctx.moveTo(cx + mastW / 2, baseY - mastH);
+      ctx.lineTo(cx + size * 0.10, baseY - mastH + size * 0.05);
+      ctx.lineTo(cx + mastW / 2, baseY - mastH + size * 0.09);
+      ctx.closePath();
+      ctx.fillStyle = goldHull;
+      ctx.fill();
+      ctx.stroke();
+
+      // Slight glow
+      const glow = ctx.createRadialGradient(cx, baseY - mastH * 0.4, size * 0.05, cx, baseY - mastH * 0.4, size * 0.35);
+      glow.addColorStop(0, 'rgba(255, 215, 0, 0.35)');
+      glow.addColorStop(1, 'rgba(255, 215, 0, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(cx, baseY - mastH * 0.4, size * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.anisotropy = 8;
+      texture.needsUpdate = true;
+      return texture;
+    }
+
     function updateArcFromInputs() {
       const latA = parseFloat(document.getElementById('latA').value);
       const lonA = parseFloat(document.getElementById('lonA').value);
@@ -484,15 +578,20 @@
       scene.add(arc);
       console.log("Arc created with", arcPoints.length, "points", isFallbackPath ? "(fallback)" : "(ocean path)");
 
-      const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      const markerGeometry = new THREE.SphereGeometry(0.015, 16, 16);
+      // Use a procedurally drawn golden ship sprite (no external asset)
+      if (!shipMaterial) {
+        const shipTexture = createGoldenShipTexture(256);
+        shipMaterial = new THREE.SpriteMaterial({ map: shipTexture, transparent: true, depthTest: true, depthWrite: false });
+      }
 
-      markerA = new THREE.Mesh(markerGeometry, markerMaterial);
+      markerA = new THREE.Sprite(shipMaterial);
       markerA.position.copy(latLongToVector3(latA, lonA, RADIUS));
+      markerA.scale.set(0.08, 0.08, 1);
       scene.add(markerA);
 
-      markerB = new THREE.Mesh(markerGeometry, markerMaterial);
+      markerB = new THREE.Sprite(shipMaterial);
       markerB.position.copy(latLongToVector3(latB, lonB, RADIUS));
+      markerB.scale.set(0.08, 0.08, 1);
       scene.add(markerB);
       
       // Calculate total distance of the path
