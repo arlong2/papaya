@@ -402,12 +402,14 @@
       let oceanPath = findOceanPath({ lat: latA, lon: lonA }, { lat: latB, lon: lonB }, isOcean);
       console.log("Ocean path found:", oceanPath ? oceanPath.length : 0, "points");
       
-      if (!oceanPath || oceanPath.length < 2) {
+      let isFallbackPath = false;
+      if (!oceanPath || oceanPath.length === 0) {
         console.warn("Ocean path failed. Drawing straight line instead.");
         oceanPath = [
           { lat: latA, lon: lonA },
           { lat: latB, lon: lonB }
         ];
+        isFallbackPath = true;
       }
 
       const arcPoints = [];
@@ -434,9 +436,22 @@
       arcPoints.push(latLongToVector3(latB, lonB, RADIUS));
 
       const arcGeometry = new THREE.BufferGeometry().setFromPoints(arcPoints);
-      arc = new THREE.Line(arcGeometry, new THREE.LineBasicMaterial({ color: 0xFFD700 }));
+      
+      if (isFallbackPath) {
+        // Red dashed line for fallback path
+        arc = new THREE.Line(arcGeometry, new THREE.LineDashedMaterial({ 
+          color: 0xFF0000,
+          dashSize: 0.1,
+          gapSize: 0.05
+        }));
+        arc.computeLineDistances(); // Required for dashed lines
+      } else {
+        // Golden solid line for ocean path
+        arc = new THREE.Line(arcGeometry, new THREE.LineBasicMaterial({ color: 0xFFD700 }));
+      }
+      
       scene.add(arc);
-      console.log("Arc created with", arcPoints.length, "points");
+      console.log("Arc created with", arcPoints.length, "points", isFallbackPath ? "(fallback)" : "(ocean path)");
 
       const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
       const markerGeometry = new THREE.SphereGeometry(0.015, 16, 16);
