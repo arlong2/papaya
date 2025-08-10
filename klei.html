@@ -139,6 +139,7 @@
 
     const RADIUS = 1.01;
     let markerA, markerB, arc, distanceText;
+    let raycaster, mouse, isDragging = false, draggedMarker = null;
 
     const geometry = new THREE.SphereGeometry(1, 64, 64);
     const texture = new THREE.TextureLoader().load('https://papaya.party/img/klei.png');
@@ -155,12 +156,80 @@
     controls.minDistance = 1.5;
     controls.maxDistance = 3;
 
+    // Initialize raycaster and mouse for dragging
+    raycaster = new THREE.Raycaster();
+    mouse = new THREE.Vector2();
+
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
     }
     animate();
+
+    // Mouse event handlers for dragging
+    function onMouseDown(event) {
+      event.preventDefault();
+      
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects([markerA, markerB]);
+      
+      if (intersects.length > 0) {
+        isDragging = true;
+        draggedMarker = intersects[0].object;
+        controls.enabled = false;
+      }
+    }
+
+    function onMouseMove(event) {
+      if (!isDragging || !draggedMarker) return;
+      
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObject(globe);
+      
+      if (intersects.length > 0) {
+        const point = intersects[0].point;
+        const normalizedPoint = point.normalize();
+        
+        // Update marker position
+        draggedMarker.position.copy(normalizedPoint.multiplyScalar(RADIUS));
+        
+        // Convert 3D position back to lat/lon using the same coordinate system as latLongToVector3
+        const lat = 90 - Math.acos(normalizedPoint.y / RADIUS) * (180 / Math.PI);
+        const lon = Math.atan2(normalizedPoint.z, -normalizedPoint.x) * (180 / Math.PI) - 180;
+        
+        // Update input fields
+        if (draggedMarker === markerA) {
+          document.getElementById('latA').value = lat.toFixed(2);
+          document.getElementById('lonA').value = lon.toFixed(2);
+        } else if (draggedMarker === markerB) {
+          document.getElementById('latB').value = lat.toFixed(2);
+          document.getElementById('lonB').value = lon.toFixed(2);
+        }
+      }
+    }
+
+    function onMouseUp(event) {
+      if (isDragging) {
+        isDragging = false;
+        draggedMarker = null;
+        controls.enabled = true;
+        
+        // Update the path after dragging is complete
+        updateArcFromInputs();
+      }
+    }
+
+    // Add event listeners
+    renderer.domElement.addEventListener('mousedown', onMouseDown);
+    renderer.domElement.addEventListener('mousemove', onMouseMove);
+    renderer.domElement.addEventListener('mouseup', onMouseUp);
 
     function latLongToVector3(lat, lon, radius) {
       const phi = (90 - lat) * (Math.PI / 180);
