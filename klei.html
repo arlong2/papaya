@@ -124,16 +124,19 @@
       transform: translateX(-50%);
       background: rgba(30, 30, 30, 0.9);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 8px 16px;
+      border-radius: 50%;
+      padding: 12px;
       color: white;
-      font-family: 'Segoe UI', Roboto, sans-serif;
-      font-size: 14px;
       cursor: pointer;
       z-index: 100;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
       backdrop-filter: blur(10px);
       transition: all 0.2s ease;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     #toggleControls:hover {
@@ -153,7 +156,11 @@
 <body>
   <div id="title">The World of Klei</div>
   <div id="banner"><span id="waveText">Made with love for Reeves</span></div>
-  <button id="toggleControls">Show Coordinates</button>
+  <button id="toggleControls">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 2c4.42 0 8 3.58 8 8s-3.58 8-8 8-8-3.58-8-8 3.58-8 8-8zm0 2c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 2c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4z"/>
+    </svg>
+  </button>
   <div id="controls">
     <div class="control-content">
       <div>
@@ -531,7 +538,14 @@
             }
           }, 300);
         }
-        toggleButton.textContent = controlsVisible ? 'Hide Coordinates' : 'Show Coordinates';
+        
+        // Update icon based on state
+        const svg = toggleButton.querySelector('svg');
+        if (controlsVisible) {
+          svg.innerHTML = '<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>';
+        } else {
+          svg.innerHTML = '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 2c4.42 0 8 3.58 8 8s-3.58 8-8 8-8-3.58-8-8 3.58-8 8-8zm0 2c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 2c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4z"/>';
+        }
       });
 
       const waveText = document.getElementById('waveText');
