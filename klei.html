@@ -5,8 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Interactive 3D Globe</title>
   <style>
-    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    body { 
+      margin: 0; 
+      overflow: hidden; 
+      font-family: sans-serif; 
+      background: #000000;
+      position: relative;
+    }
+    
     canvas { display: block; }
+    
+    #stars {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+    }
+    
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle 3s infinite ease-in-out;
+    }
+    
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
 
     #title {
       position: absolute;
@@ -154,6 +183,7 @@
   </style>
 </head>
 <body>
+  <div id="stars"></div>
   <div id="title">The World of Klei</div>
   <div id="banner"><span id="waveText">Made with love for Reeves</span></div>
   <button id="toggleControls">
@@ -184,8 +214,9 @@
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     camera.position.z = 2.5;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 0); // Transparent background
     document.body.appendChild(renderer.domElement);
 
     const RADIUS = 1.01;
@@ -529,6 +560,30 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      // Create twinkling stars
+      const starsContainer = document.getElementById('stars');
+      const numStars = 200;
+      
+      for (let i = 0; i < numStars; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        
+        // Random position
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        
+        // Random size
+        const size = Math.random() * 3 + 1;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        
+        // Random animation delay
+        star.style.animationDelay = Math.random() * 3 + 's';
+        star.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        
+        starsContainer.appendChild(star);
+      }
+
       document.querySelectorAll('#latA, #lonA, #latB, #lonB').forEach(input => {
         input.addEventListener('input', updateArcFromInputs);
       });
