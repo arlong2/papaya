@@ -790,9 +790,9 @@
       // Position the bubble at the midpoint of the path
       const midIndex = Math.floor(oceanPath.length / 2);
       const midPoint = oceanPath[midIndex];
-      const midPosition = latLongToVector3(midPoint.lat, midPoint.lon, RADIUS + 0.05);
+      const midPosition = latLongToVector3(midPoint.lat, midPoint.lon, RADIUS + 0.1);
       distanceText.position.copy(midPosition);
-      distanceText.scale.set(0.2, 0.05, 1);
+      distanceText.scale.set(0.3, 0.10, 1); // slightly bigger for clarity
       scene.add(distanceText);
       console.log("Ocean path length:", oceanPath.length);
       console.log("Total distance:", totalDistance.toFixed(0), "km");
