@@ -42,8 +42,16 @@
       padding: 24px;
     }
 
+    /* Layout wrapper for card + sidebar */
+    .layout {
+      display: flex;
+      gap: 24px;
+      width: min(1100px, 100%);
+      align-items: stretch;
+    }
+
     .card {
-      width: min(800px, 100%);
+      flex: 2;
       background: var(--card-bg);
       border-radius: var(--radius-xl);
       padding: 32px 28px 26px;
@@ -241,6 +249,102 @@
       color: var(--accent);
     }
 
+    /* Sidebar styles */
+    .sidebar {
+      flex: 1;
+      background: rgba(6, 8, 30, 0.95);
+      border-radius: var(--radius-xl);
+      padding: 20px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      max-height: 520px;
+      overflow: hidden;
+    }
+
+    .sidebar-title {
+      font-size: 0.82rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .sidebar-sub {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .recent-list {
+      list-style: none;
+      margin-top: 6px;
+      padding-right: 4px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(156, 123, 255, 0.7) transparent;
+    }
+
+    .recent-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .recent-list::-webkit-scrollbar-thumb {
+      background: rgba(156, 123, 255, 0.7);
+      border-radius: 999px;
+    }
+
+    .recent-item {
+      margin-bottom: 6px;
+    }
+
+    .recent-btn {
+      width: 100%;
+      text-align: left;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(10, 12, 40, 0.9);
+      padding: 8px 10px;
+      font-size: 0.82rem;
+      color: var(--text-main);
+      cursor: pointer;
+      outline: none;
+      transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .recent-btn:hover {
+      background: rgba(17, 20, 64, 0.98);
+      border-color: var(--accent-soft);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6);
+    }
+
+    .recent-btn:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .placeholder {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      opacity: 0.8;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        max-height: none;
+        order: 2;
+      }
+    }
+
     @media (max-width: 600px) {
       .card {
         padding: 24px 18px 20px;
@@ -249,40 +353,50 @@
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="headline">Emotional Support Brian</div>
-    <div class="sub">Type something magical and I’ll speak it out loud.</div>
+  <div class="layout">
+    <!-- Sidebar with recent prompts -->
+    <aside class="sidebar">
+      <div class="sidebar-title">Recent Prompts</div>
+      <div class="sidebar-sub">Click any prompt to reuse it.</div>
+      <ul id="recentList" class="recent-list">
+        <li class="placeholder">No prompts yet. Your history will appear here.</li>
+      </ul>
+    </aside>
+    <div class="card">
+      <div class="headline">Emotional Support Brian</div>
+      <div class="sub">Type something magical and I’ll speak it out loud.</div>
 
-    <form id="ttsForm">
-      <textarea
-        id="transcriptInput"
-        placeholder="Type something magical…"
-        required
-      ></textarea>
+      <form id="ttsForm">
+        <textarea
+          id="transcriptInput"
+          placeholder="Type something magical…"
+          required
+        ></textarea>
 
-      <div class="btn-wrap">
-        <button type="submit" class="btn-primary" id="submitBtn">
-          Generate Audio
-        </button>
+        <div class="btn-wrap">
+          <button type="submit" class="btn-primary" id="submitBtn">
+            Generate Audio
+          </button>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+      </form>
+
+      <!-- Playback (hidden until first success) -->
+      <div class="bottom-row" id="playbackRow">
+        <div class="bottom-row-title">Playback</div>
+        <audio id="audioPlayer" controls></audio>
+        <div class="status-text" id="statusText">Ready when you are.</div>
       </div>
 
-      <div class="error-message" id="errorMessage"></div>
-    </form>
-
-    <!-- Playback (hidden until first success) -->
-    <div class="bottom-row" id="playbackRow">
-      <div class="bottom-row-title">Playback</div>
-      <audio id="audioPlayer" controls></audio>
-      <div class="status-text" id="statusText">Ready when you are.</div>
-    </div>
-
-    <!-- Loading overlay -->
-    <div class="overlay" id="loadingOverlay">
-      <div class="wave-loader">
-        <span></span><span></span><span></span><span></span><span></span>
-      </div>
-      <div class="overlay-text">
-        Generating <span>your voice</span>…
+      <!-- Loading overlay -->
+      <div class="overlay" id="loadingOverlay">
+        <div class="wave-loader">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="overlay-text">
+          Generating <span>your voice</span>…
+        </div>
       </div>
     </div>
   </div>
@@ -300,7 +414,10 @@
     const audio = document.getElementById("audioPlayer");
     const statusText = document.getElementById("statusText");
 
+    const recentList = document.getElementById("recentList");
+
     let currentObjectUrl = null;
+    let recentPrompts = [];
 
     function setLoading(isLoading) {
       btn.disabled = isLoading;
@@ -315,6 +432,83 @@
       errorMessage.textContent = msg || "";
     }
 
+    // --- Recent prompts helpers ---
+
+    function saveRecent() {
+      try {
+        localStorage.setItem("esb_recent_prompts", JSON.stringify(recentPrompts));
+      } catch (err) {
+        console.warn("Unable to save recent prompts:", err);
+      }
+    }
+
+    function loadRecent() {
+      try {
+        const stored = localStorage.getItem("esb_recent_prompts");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            recentPrompts = parsed;
+          }
+        }
+      } catch (err) {
+        console.warn("Unable to load recent prompts:", err);
+      }
+      renderRecent();
+    }
+
+    function addRecentPrompt(text) {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+
+      // Avoid duplicate directly on top
+      if (recentPrompts[0] === trimmed) {
+        return;
+      }
+
+      recentPrompts.unshift(trimmed);
+      if (recentPrompts.length > 8) {
+        recentPrompts.pop();
+      }
+      renderRecent();
+      saveRecent();
+    }
+
+    function renderRecent() {
+      recentList.innerHTML = "";
+
+      if (!recentPrompts.length) {
+        const li = document.createElement("li");
+        li.className = "placeholder";
+        li.textContent = "No prompts yet. Your history will appear here.";
+        recentList.appendChild(li);
+        return;
+      }
+
+      recentPrompts.forEach((prompt) => {
+        const li = document.createElement("li");
+        li.className = "recent-item";
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "recent-btn";
+        btn.textContent = prompt.length > 80 ? prompt.slice(0, 77) + "…" : prompt;
+        btn.title = prompt;
+
+        btn.addEventListener("click", () => {
+          input.value = prompt;
+          input.focus();
+          input.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+
+        li.appendChild(btn);
+        recentList.appendChild(li);
+      });
+    }
+
+    // Initial load of recent prompts
+    loadRecent();
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       setError("");
@@ -324,6 +518,9 @@
         setError("Please enter some text first.");
         return;
       }
+
+      // Add to recent immediately on submit
+      addRecentPrompt(text);
 
       console.log("Sending to TTS API:", API_URL, "text:", text);
       setLoading(true);
