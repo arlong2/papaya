@@ -50,6 +50,15 @@
       align-items: stretch;
     }
 
+    .container {
+      display: flex;
+      align-items: stretch; /* makes children the same height */
+    }
+
+    .card, .sidebar {
+      flex: 1;          /* optional: makes them equal width too */
+    }
+
     .card {
       flex: 2;
       background: var(--card-bg);
