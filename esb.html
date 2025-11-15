@@ -40,6 +40,25 @@
       align-items: center;
       justify-content: center;
       padding: 24px;
+      position: relative; /* for the falling layer */
+      overflow: hidden;   /* hide sprites when above the top */
+    }
+
+    /* Full-screen layer for falling Brians (behind UI) */
+    #brianLayer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .brian-sprite {
+      position: absolute;
+      pointer-events: none;
+      will-change: transform;
+      filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.8));
+      transform-origin: center center;
     }
 
     /* Layout wrapper for card + sidebar */
@@ -48,11 +67,8 @@
       gap: 24px;
       width: min(1100px, 100%);
       align-items: stretch;
-    }
-
-    .container {
-      display: flex;
-      align-items: stretch; /* makes children the same height */
+      position: relative;
+      z-index: 1; /* above falling Brians */
     }
 
     .card {
@@ -64,8 +80,6 @@
       border: 1px solid rgba(255, 255, 255, 0.08);
       position: relative;
       overflow: hidden;
-
-      /* make the card a vertical flex container */
       display: flex;
       flex-direction: column;
     }
@@ -96,8 +110,6 @@
       margin-bottom: 22px;
     }
 
-    /* form fills remaining vertical space under the header,
-       so the button can sit centered in that space */
     form {
       display: flex;
       flex-direction: column;
@@ -130,14 +142,12 @@
       background: #090a1b;
     }
 
-    /* this wrapper becomes the space between textarea bottom and card bottom;
-       button is centered in that space */
     .btn-wrap {
       flex: 1;
       display: flex;
-      justify-content: center;  /* horizontal center */
-      align-items: center;      /* vertical center */
-      margin-top: 4px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
     }
 
     .btn-primary {
@@ -176,15 +186,15 @@
 
     .error-message {
       margin-top: 8px;
+      margin-bottom: 16px;
       min-height: 18px;
       font-size: 0.85rem;
       color: var(--error);
       text-align: center;
     }
 
-    /* bottom-row sits AFTER the form and thus at the bottom of the card */
     .bottom-row {
-      display: none; /* hidden until we have audio */
+      display: none;
       margin-top: 20px;
       padding: 14px 16px;
       border-radius: 18px;
@@ -208,6 +218,243 @@
       margin-top: 6px;
       font-size: 0.84rem;
       color: var(--text-muted);
+    }
+
+    /* "More Brian" row */
+    .more-brian-row {
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .more-brian-text {
+      opacity: 0.95;
+    }
+
+    /* Day/Night style toggle (adapted from CodePen) */
+    .toggleWrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .toggleWrapper .dn {
+      position: absolute;
+      left: -999em;
+    }
+
+    .toggle {
+      cursor: pointer;
+      display: inline-block;
+      position: relative;
+      width: 90px;
+      height: 50px;
+      background-color: rgba(10, 12, 40, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 84px;
+      transition: background-color 200ms cubic-bezier(0.445, 0.05, 0.55, 0.95);
+    }
+
+    /* Optional labels inside the switch (Off / On) */
+    .toggle::before {
+      content: '';
+      position: absolute;
+      left: -46px;
+      top: 14px;
+      font-size: 14px;
+      color: #c2c5e5;
+    }
+    .toggle::after {
+      content: ''; /* content: 'More Brian'; */
+      position: absolute;
+      right: -88px;
+      top: 14px;
+      font-size: 14px;
+      color: #749ED7;
+    }
+
+    .toggle__handler {
+      display: inline-block;
+      position: relative;
+      z-index: 1;
+      top: 2px;
+      left: 3px;
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(90deg, var(--accent-strong), var(--accent));
+      color: #070712;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+      border-radius: 50px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.3);
+      transition: all 400ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      transform: rotate(-45deg);
+
+    }
+
+    .toggle__handler .crater {
+      position: absolute;
+      background: linear-gradient(90deg, var(--accent-strong), var(--accent));
+      color: #070712;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+      opacity: 0;
+      transition: opacity 200ms ease-in-out;
+      border-radius: 100%;
+    }
+
+    .toggle__handler .crater--1 {
+      top: 18px;
+      left: 10px;
+      width: 4px;
+      height: 4px;
+    }
+
+    .toggle__handler .crater--2 {
+      top: 28px;
+      left: 22px;
+      width: 6px;
+      height: 6px;
+    }
+
+    .toggle__handler .crater--3 {
+      top: 10px;
+      left: 25px;
+      width: 8px;
+      height: 8px;
+    }
+
+    .star {
+      position: absolute;
+      background-color: #ffffff;
+      transition: all 300ms cubic-bezier(0.445, 0.05, 0.55, 0.95);
+      border-radius: 50%;
+    }
+
+    .star--1 {
+      top: 10px;
+      left: 35px;
+      z-index: 0;
+      width: 30px;
+      height: 3px;
+    }
+
+    .star--2 {
+      top: 18px;
+      left: 28px;
+      z-index: 1;
+      width: 30px;
+      height: 3px;
+    }
+
+    .star--3 {
+      top: 27px;
+      left: 40px;
+      z-index: 0;
+      width: 30px;
+      height: 3px;
+    }
+
+    .star--4,
+    .star--5,
+    .star--6 {
+      opacity: 0;
+      transition: all 300ms cubic-bezier(0.445, 0.05, 0.55, 0.95);
+    }
+
+    .star--4 {
+      top: 16px;
+      left: 11px;
+      z-index: 0;
+      width: 2px;
+      height: 2px;
+      transform: translate3d(3px, 0, 0);
+    }
+
+    .star--5 {
+      top: 32px;
+      left: 17px;
+      z-index: 0;
+      width: 3px;
+      height: 3px;
+      transform: translate3d(3px, 0, 0);
+    }
+
+    .star--6 {
+      top: 36px;
+      left: 28px;
+      z-index: 0;
+      width: 2px;
+      height: 2px;
+      transform: translate3d(3px, 0, 0);
+    }
+
+    .toggleWrapper .dn:checked + .toggle {
+      background: linear-gradient(90deg, var(--accent-strong), var(--accent));
+      color: #070712;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter 0.18s;
+    }
+
+    .toggleWrapper .dn:checked + .toggle::before {
+      color: #749ED7;
+    }
+
+    .toggleWrapper .dn:checked + .toggle::after {
+      color: #ffffff;
+    }
+
+    .toggleWrapper .dn:checked + .toggle .toggle__handler {
+      /* Move to the right when enabled */
+      transform: translate3d(40px, 0, 0) rotate(0);
+
+      /* Show Brian image when enabled */
+      background-image: url("https://papaya.party/brian.png");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-color: transparent;
+    }
+
+    .toggleWrapper .dn:checked + .toggle .toggle__handler .crater {
+      opacity: 0;
+    }
+
+    .toggleWrapper .dn:checked + .toggle .star--1 {
+      width: 2px;
+      height: 2px;
+    }
+
+    .toggleWrapper .dn:checked + .toggle .star--2 {
+      width: 4px;
+      height: 4px;
+      transform: translate3d(-5px, 0, 0);
+    }
+
+    .toggleWrapper .dn:checked + .toggle .star--3 {
+      width: 2px;
+      height: 2px;
+      transform: translate3d(-7px, 0, 0);
+    }
+
+    .toggleWrapper .dn:checked + .toggle .star--4,
+    .toggleWrapper .dn:checked + .toggle .star--5,
+    .toggleWrapper .dn:checked + .toggle .star--6 {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+
+    .toggleWrapper .dn:checked + .toggle .star--4 {
+      transition-delay: 200ms;
+    }
+
+    .toggleWrapper .dn:checked + .toggle .star--5 {
+      transition-delay: 300ms;
+    }
+
+    .toggleWrapper .dn:checked + .toggle .star--6 {
+      transition-delay: 400ms;
     }
 
     /* Loading overlay */
@@ -268,7 +515,7 @@
 
     /* Sidebar styles */
     .sidebar {
-      flex: 0 0 320px;   /* fixed base width */
+      flex: 0 0 320px;
       width: 320px;
       max-width: 340px;
       background: rgba(6, 8, 30, 0.95);
@@ -278,7 +525,6 @@
       box-shadow: var(--shadow-soft);
       display: flex;
       flex-direction: column;
-      /* let it stretch to match the card height */
     }
 
     .sidebar-title {
@@ -353,32 +599,35 @@
     }
 
     @media (max-width: 900px) {
-
       .layout {
         flex-direction: column;
       }
-
       .sidebar {
         flex: 1 1 auto;
         width: 100%;
         max-width: none;
         order: 2;
       }
-
       .card {
-        width: 100%;        /* 👈 add this line */
+        width: 100%;
       }
-
     }
 
     @media (max-width: 600px) {
       .card {
         padding: 24px 18px 20px;
       }
+      .toggle::before,
+      .toggle::after {
+        display: none; /* save space on very small screens */
+      }
     }
   </style>
 </head>
 <body>
+  <!-- Falling Brian layer -->
+  <div id="brianLayer"></div>
+
   <div class="layout">
     <!-- Sidebar with recent prompts -->
     <aside class="sidebar">
@@ -416,6 +665,26 @@
         <div class="status-text" id="statusText">Ready when you are.</div>
       </div>
 
+      <!-- More Brian toggle -->
+      <div class="more-brian-row">
+        <div class="toggleWrapper">
+          <input type="checkbox" class="dn" id="moreBrianToggle" />
+          <label for="moreBrianToggle" class="toggle">
+            <span class="toggle__handler">
+              <span class="crater crater--1"></span>
+              <span class="crater crater--2"></span>
+              <span class="crater crater--3"></span>
+            </span>
+            <span class="star star--1"></span>
+            <span class="star star--2"></span>
+            <span class="star star--3"></span>
+            <span class="star star--4"></span>
+            <span class="star star--5"></span>
+            <span class="star star--6"></span>
+          </label>
+        </div>
+      </div>
+
       <!-- Loading overlay -->
       <div class="overlay" id="loadingOverlay">
         <div class="wave-loader">
@@ -440,8 +709,13 @@
     const playbackRow = document.getElementById("playbackRow");
     const audio = document.getElementById("audioPlayer");
     const statusText = document.getElementById("statusText");
-
     const recentList = document.getElementById("recentList");
+    const moreBrianToggle = document.getElementById("moreBrianToggle");
+
+    let moreBrianEnabled = false;
+    moreBrianToggle.addEventListener("change", () => {
+      moreBrianEnabled = moreBrianToggle.checked;
+    });
 
     let currentObjectUrl = null;
     let recentPrompts = [];
@@ -460,7 +734,6 @@
     }
 
     // --- Recent prompts helpers ---
-
     function saveRecent() {
       try {
         localStorage.setItem("esb_recent_prompts", JSON.stringify(recentPrompts));
@@ -487,11 +760,7 @@
     function addRecentPrompt(text) {
       const trimmed = text.trim();
       if (!trimmed) return;
-
-      // Avoid duplicate directly on top
-      if (recentPrompts[0] === trimmed) {
-        return;
-      }
+      if (recentPrompts[0] === trimmed) return;
 
       recentPrompts.unshift(trimmed);
       if (recentPrompts.length > 8) {
@@ -533,8 +802,179 @@
       });
     }
 
-    // Initial load of recent prompts
     loadRecent();
+
+    // --- Falling Brian physics setup ---
+    const brianLayer = document.getElementById("brianLayer");
+    const BRIAN_IMG_SRC = "https://papaya.party/brian.png";
+    const BRIAN_BASE_WIDTH = 80;
+    const GRAVITY = 0.4;
+    const BOUNCE = 0.35;
+    const GROUND_FRICTION = 0.9;
+    const AIR_FRICTION = 0.999;
+
+    const brianImage = new Image();
+    brianImage.src = BRIAN_IMG_SRC;
+
+    const brianSprites = [];
+    let brianAnimating = false;
+
+    function spawnBrian() {
+      if (!brianLayer) return;
+      const layerRect = brianLayer.getBoundingClientRect();
+      const layerWidth = layerRect.width;
+      const aspect =
+        brianImage.naturalWidth > 0
+          ? brianImage.naturalHeight / brianImage.naturalWidth
+          : 1;
+
+      const w = BRIAN_BASE_WIDTH;
+      const h = BRIAN_BASE_WIDTH * aspect;
+
+      const minX = 0;
+      const maxX = Math.max(minX, layerWidth - w);
+      const startX = Math.random() * (maxX - minX) + minX;
+      const startY = -h - 20;
+
+      const initialAngle = (Math.random() * 40) - 20;
+      const angularVelocity = (Math.random() - 0.5) * 1.2;
+
+      const sprite = document.createElement("img");
+      sprite.src = BRIAN_IMG_SRC;
+      sprite.alt = "Falling Brian";
+      sprite.className = "brian-sprite";
+      sprite.style.width = w + "px";
+      sprite.style.height = h + "px";
+      sprite.style.left = startX + "px";
+      sprite.style.top = startY + "px";
+
+      brianLayer.appendChild(sprite);
+
+      brianSprites.push({
+        x: startX,
+        y: startY,
+        vx: (Math.random() - 0.5) * 1.2,
+        vy: 0,
+        w,
+        h,
+        angle: initialAngle,
+        av: angularVelocity,
+        el: sprite,
+      });
+
+      if (!brianAnimating) {
+        brianAnimating = true;
+        requestAnimationFrame(updateBrianSprites);
+      }
+    }
+
+    function updateBrianSprites() {
+      if (!brianLayer) {
+        brianAnimating = false;
+        return;
+      }
+
+      const layerRect = brianLayer.getBoundingClientRect();
+      const width = layerRect.width;
+      const height = layerRect.height;
+
+      for (let i = 0; i < brianSprites.length; i++) {
+        const s = brianSprites[i];
+
+        s.vy += GRAVITY;
+        s.vx *= AIR_FRICTION;
+
+        s.x += s.vx;
+        s.y += s.vy;
+
+        const ground = height - s.h;
+        const isOnGround = s.y >= ground - 0.5;
+
+        if (!isOnGround) {
+          s.angle += s.av;
+        } else {
+          s.av *= 0.9;
+          if (Math.abs(s.av) < 0.02) s.av = 0;
+          s.angle += s.av;
+        }
+
+        if (s.x < 0) {
+          s.x = 0;
+          s.vx = -s.vx * BOUNCE;
+        } else if (s.x + s.w > width) {
+          s.x = width - s.w;
+          s.vx = -s.vx * BOUNCE;
+        }
+
+        if (s.y > ground) {
+          s.y = ground;
+          if (Math.abs(s.vy) > 0.5) {
+            s.vy = -s.vy * BOUNCE;
+          } else {
+            s.vy = 0;
+          }
+          s.vx *= GROUND_FRICTION;
+          if (Math.abs(s.vx) < 0.02) s.vx = 0;
+        }
+      }
+
+      // collisions
+      for (let i = 0; i < brianSprites.length; i++) {
+        for (let j = i + 1; j < brianSprites.length; j++) {
+          const a = brianSprites[i];
+          const b = brianSprites[j];
+
+          const axCenter = a.x + a.w / 2;
+          const ayCenter = a.y + a.h / 2;
+          const bxCenter = b.x + b.w / 2;
+          const byCenter = b.y + b.h / 2;
+
+          const dx = axCenter - bxCenter;
+          const dy = ayCenter - byCenter;
+          const overlapX = a.w / 2 + b.w / 2 - Math.abs(dx);
+          const overlapY = a.h / 2 + b.h / 2 - Math.abs(dy);
+
+          if (overlapX > 0 && overlapY > 0) {
+            if (overlapX < overlapY) {
+              const push = overlapX / 2;
+              const sign = dx > 0 ? 1 : -1;
+              a.x += push * sign;
+              b.x -= push * sign;
+
+              const tempVx = a.vx;
+              a.vx = b.vx * BOUNCE;
+              b.vx = tempVx * BOUNCE;
+            } else {
+              const push = overlapY / 2;
+              const sign = dy > 0 ? 1 : -1;
+              a.y += push * sign;
+              b.y -= push * sign;
+
+              const tempVy = a.vy;
+              a.vy = b.vy * BOUNCE;
+              b.vy = tempVy * BOUNCE;
+            }
+          }
+        }
+      }
+
+      let anyMoving = false;
+      for (const s of brianSprites) {
+        s.el.style.left = s.x + "px";
+        s.el.style.top = s.y + "px";
+        s.el.style.transform = `rotate(${s.angle}deg)`;
+
+        if (Math.abs(s.vx) + Math.abs(s.vy) + Math.abs(s.av) > 0.05) {
+          anyMoving = true;
+        }
+      }
+
+      if (anyMoving) {
+        requestAnimationFrame(updateBrianSprites);
+      } else {
+        brianAnimating = false;
+      }
+    }
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -546,10 +986,12 @@
         return;
       }
 
-      // Add to recent immediately on submit
       addRecentPrompt(text);
 
-      console.log("Sending to TTS API:", API_URL, "text:", text);
+      if (moreBrianEnabled) {
+        spawnBrian();
+      }
+
       setLoading(true);
       statusText.textContent = "Contacting TTS server…";
 
@@ -566,14 +1008,11 @@
           })
         });
 
-        console.log("TTS response status:", resp.status);
-
         if (!resp.ok) {
           throw new Error("Server returned " + resp.status);
         }
 
         const blob = await resp.blob();
-        console.log("Received blob of type:", blob.type, "size:", blob.size);
 
         if (blob.type && !blob.type.startsWith("audio") &&
             !blob.type.startsWith("application/octet-stream")) {
@@ -592,7 +1031,6 @@
           await audio.play();
           statusText.textContent = "Playing audio. 🎧";
         } catch (playErr) {
-          console.warn("Autoplay blocked:", playErr);
           statusText.textContent = "Audio ready. Press play to listen.";
         }
       } catch (err) {
