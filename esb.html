@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Colorful TTS Player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #ff7a18, #af002d 70%, #319197);
+      --card-bg: rgba(15, 15, 30, 0.9);
+      --accent: #ffcc4c;
+      --accent-soft: rgba(255, 204, 76, 0.15);
+      --accent-strong: #ff5ad1;
+      --text-main: #fdfdfd;
+      --text-muted: #c6c6d3;
+      --error: #ff4e4e;
+      --radius-xl: 24px;
+      --shadow-soft: 0 24px 55px rgba(0, 0, 0, 0.4);
+      --transition-fast: 0.18s ease-out;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-main);
+      padding: 20px;
+    }
+
+    .glow-orbit {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .glow-orbit::before,
+    .glow-orbit::after {
+      content: "";
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, rgba(255, 255, 255, 0.38), transparent 60%);
+      filter: blur(12px);
+      opacity: 0.28;
+      animation: float 14s ease-in-out infinite alternate;
+    }
+
+    .glow-orbit::before {
+      top: -120px;
+      left: -80px;
+    }
+    .glow-orbit::after {
+      bottom: -150px;
+      right: -60px;
+      animation-delay: 4s;
+    }
+
+    @keyframes float {
+      0%   { transform: translate3d(0, 0, 0) scale(1); }
+      100% { transform: translate3d(40px, -30px, 0) scale(1.1); }
+    }
+
+    .card {
+      width: 100%;
+      max-width: 640px;
+      background: var(--card-bg);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-soft);
+      padding: 32px 28px 26px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(14px);
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -30%;
+      background-image:
+        radial-gradient(circle at 0 0, rgba(255, 90, 209, 0.13), transparent 60%),
+        radial-gradient(circle at 100% 0, rgba(50, 200, 255, 0.14), transparent 60%),
+        radial-gradient(circle at 50% 100%, rgba(255, 204, 76, 0.15), transparent 60%);
+      opacity: 0.7;
+      z-index: -1;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .card-title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      color: var(--text-muted);
+    }
+
+    .pill-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(255, 204, 76, 0.8);
+    }
+
+    .card-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .card-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .mini-eq {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 18px;
+    }
+
+    .mini-eq span {
+      width: 3px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.4);
+      animation: miniBounce 0.9s ease-in-out infinite alternate;
+    }
+
+    .mini-eq span:nth-child(2) { animation-delay: 0.16s; }
+    .mini-eq span:nth-child(3) { animation-delay: 0.32s; }
+    .mini-eq span:nth-child(4) { animation-delay: 0.48s; }
+
+    @keyframes miniBounce {
+      0%   { height: 4px; }
+      100% { height: 16px; }
+    }
+
+    .form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .label-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .label-row span:first-child {
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      border-radius: 18px;
+      padding: 14px 14px 40px;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      background: rgba(3, 3, 18, 0.82);
+      color: var(--text-main);
+      font-size: 0.98rem;
+      line-height: 1.5;
+      outline: none;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform 0.12s ease-out, background 0.2s ease-out;
+    }
+
+    textarea::placeholder {
+      color: rgba(198, 198, 211, 0.65);
+    }
+
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(255, 204, 76, 0.35);
+      transform: translateY(-1px);
+      background: rgba(3, 3, 20, 0.94);
+    }
+
+    .char-counter {
+      position: relative;
+      margin-top: -30px;
+      margin-bottom: 22px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: right;
+      padding-right: 4px;
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      flex: 1;
+      min-width: 180px;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 20px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      background: radial-gradient(circle at 10% 0, var(--accent-strong), var(--accent));
+      color: #190c24;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.55);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter 0.18s ease-out;
+    }
+
+    .btn-primary span.icon {
+      font-size: 1.1rem;
+      margin-top: 1px;
+    }
+
+    .btn-primary::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.28), transparent 55%);
+      opacity: 0;
+      transition: opacity 0.3s ease-out;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+      filter: brightness(1.05);
+    }
+
+    .btn-primary:hover::after {
+      opacity: 1;
+    }
+
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.65);
+      filter: brightness(0.95);
+    }
+
+    .btn-primary:disabled {
+      cursor: wait;
+      opacity: 0.7;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      opacity: 0.9;
+    }
+
+    .hint strong {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .bottom-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .audio-wrapper {
+      flex: 1;
+      min-width: 220px;
+      padding: 10px 12px;
+      border-radius: 18px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .audio-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 3px;
+    }
+
+    audio {
+      width: 100%;
+      outline: none;
+    }
+
+    .status-text {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .status-text strong {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* Waiting overlay / animation */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(circle at 10% 0, rgba(0, 0, 0, 0.84), rgba(0, 0, 0, 0.88));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 18px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease-out;
+      z-index: 2;
+    }
+
+    .overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .wave-loader {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 46px;
+    }
+
+    .wave-loader span {
+      width: 8px;
+      border-radius: 999px;
+      background: linear-gradient(to top, var(--accent-strong), var(--accent));
+      box-shadow: 0 0 18px rgba(255, 90, 209, 0.8);
+      animation: wave 0.9s ease-in-out infinite alternate;
+    }
+
+    .wave-loader span:nth-child(2) { animation-delay: 0.12s; }
+    .wave-loader span:nth-child(3) { animation-delay: 0.24s; }
+    .wave-loader span:nth-child(4) { animation-delay: 0.36s; }
+    .wave-loader span:nth-child(5) { animation-delay: 0.48s; }
+
+    @keyframes wave {
+      0%   { height: 10px; transform: translateY(6px); opacity: 0.7; }
+      100% { height: 42px; transform: translateY(-3px); opacity: 1; }
+    }
+
+    .overlay-text {
+      text-align: center;
+      max-width: 260px;
+    }
+
+    .overlay-title {
+      font-size: 0.95rem;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .overlay-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .overlay-subtitle span {
+      color: var(--accent);
+    }
+
+    .error-message {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: var(--error);
+      min-height: 1.1em;
+    }
+
+    @media (max-width: 600px) {
+      .card {
+        padding: 24px 18px 20px;
+      }
+      .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .controls-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .btn-primary {
+        width: 100%;
+      }
+      .bottom-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .audio-wrapper {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-orbit"></div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title-block">
+        <div class="pill">
+          <span class="pill-dot"></span>
+          <span>Live Voice Studio</span>
+        </div>
+        <div class="card-title">Text → Colorful Voice</div>
+        <div class="card-subtitle">Type anything, generate a voice, and listen instantly.</div>
+      </div>
+
+      <div class="mini-eq" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <form class="form" id="ttsForm">
+      <div class="label-row">
+        <span>Transcript</span>
+        <span>Make it fun, weird, or poetic ✨</span>
+      </div>
+
+      <textarea
+        id="transcriptInput"
+        placeholder="Type something for Numera to say…"
+        maxlength="600"
+        required
+      ></textarea>
+
+      <div class="char-counter">
+        <span id="charCount">0</span>/600 characters
+      </div>
+
+      <div class="controls-row">
+        <button type="submit" class="btn-primary" id="submitBtn">
+          <span class="icon">▶</span>
+          <span>Generate &amp; Play</span>
+        </button>
+        <div class="hint">
+          Your text is sent to a <strong>secure TTS API</strong> and comes back as a WAV file.
+        </div>
+      </div>
+    </form>
+
+    <div class="bottom-row">
+      <div class="audio-wrapper">
+        <div class="audio-label">Playback</div>
+        <audio id="audioPlayer" controls></audio>
+        <div class="status-text" id="statusText">
+          Waiting for your first creation…
+        </div>
+      </div>
+      <div class="error-message" id="errorMessage"></div>
+    </div>
+
+    <!-- Waiting overlay -->
+    <div class="overlay" id="loadingOverlay" aria-hidden="true">
+      <div class="wave-loader">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="overlay-text">
+        <div class="overlay-title">Summoning your sound…</div>
+        <div class="overlay-subtitle">
+          Spinning pixels into <span>voice magic</span>. This should only take a moment.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const API_URL = "https://isat.hellobrian.io:8443/tts";
+      const VOICE_ID = "d2c5774a-b5a1-4657-8692-80ac302353a9";
+
+      const form = document.getElementById("ttsForm");
+      const input = document.getElementById("transcriptInput");
+      const btn = document.getElementById("submitBtn");
+      const audio = document.getElementById("audioPlayer");
+      const statusText = document.getElementById("statusText");
+      const errorMessage = document.getElementById("errorMessage");
+      const overlay = document.getElementById("loadingOverlay");
+      const charCount = document.getElementById("charCount");
+
+      let currentObjectUrl = null;
+
+      // Character counter
+      input.addEventListener("input", () => {
+        charCount.textContent = input.value.length.toString();
+      });
+
+      function setLoading(isLoading) {
+        if (isLoading) {
+          btn.disabled = true;
+          overlay.classList.add("visible");
+        } else {
+          btn.disabled = false;
+          overlay.classList.remove("visible");
+        }
+      }
+
+      function setError(message) {
+        errorMessage.textContent = message || "";
+      }
+
+      function revokeCurrentObjectUrl() {
+        if (currentObjectUrl) {
+          URL.revokeObjectURL(currentObjectUrl);
+          currentObjectUrl = null;
+        }
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        setError("");
+
+        const text = input.value.trim();
+        if (!text) {
+          setError("Please enter some text before generating audio.");
+          return;
+        }
+
+        setLoading(true);
+        statusText.innerHTML = "Contacting the TTS engine…";
+
+        try {
+          const response = await fetch(API_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "audio/wav,*/*"
+            },
+            body: JSON.stringify({
+              transcript: text,
+              voice_id: VOICE_ID
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error("Server returned status " + response.status);
+          }
+
+          const blob = await response.blob();
+
+          // Basic mime check; not perfect but helps detect obvious HTML error pages.
+          if (blob.type && !blob.type.startsWith("audio") && !blob.type.startsWith("application/octet-stream")) {
+            throw new Error("Unexpected response type from server (not audio).");
+          }
+
+          revokeCurrentObjectUrl();
+          const objectUrl = URL.createObjectURL(blob);
+          currentObjectUrl = objectUrl;
+
+          audio.src = objectUrl;
+          statusText.innerHTML = "<strong>Ready.</strong> Hit play if it didn’t auto-start.";
+          try {
+            await audio.play();
+            statusText.innerHTML = "<strong>Playing.</strong> Turn it up 🔊";
+          } catch (playErr) {
+            // Autoplay may be blocked; just update status.
+            statusText.innerHTML = "Audio ready. Press play to listen.";
+          }
+        } catch (err) {
+          console.error(err);
+          setError("Something went wrong while generating audio. " +
+                   "Check the console/network tab for details.");
+          statusText.textContent = "Audio not available.";
+        } finally {
+          setLoading(false);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
