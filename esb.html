@@ -55,12 +55,8 @@
       align-items: stretch; /* makes children the same height */
     }
 
-    .card, .sidebar {
-      flex: 1;          /* optional: makes them equal width too */
-    }
-
     .card {
-      flex: 2;
+      flex: 1 1 auto;
       background: var(--card-bg);
       border-radius: var(--radius-xl);
       padding: 32px 28px 26px;
@@ -68,6 +64,10 @@
       border: 1px solid rgba(255, 255, 255, 0.08);
       position: relative;
       overflow: hidden;
+
+      /* make the card a vertical flex container */
+      display: flex;
+      flex-direction: column;
     }
 
     .card::before {
@@ -96,10 +96,13 @@
       margin-bottom: 22px;
     }
 
+    /* form fills remaining vertical space under the header,
+       so the button can sit centered in that space */
     form {
       display: flex;
       flex-direction: column;
       gap: 16px;
+      flex: 1;
     }
 
     textarea {
@@ -127,9 +130,13 @@
       background: #090a1b;
     }
 
+    /* this wrapper becomes the space between textarea bottom and card bottom;
+       button is centered in that space */
     .btn-wrap {
+      flex: 1;
       display: flex;
-      justify-content: center;
+      justify-content: center;  /* horizontal center */
+      align-items: center;      /* vertical center */
       margin-top: 4px;
     }
 
@@ -175,6 +182,7 @@
       text-align: center;
     }
 
+    /* bottom-row sits AFTER the form and thus at the bottom of the card */
     .bottom-row {
       display: none; /* hidden until we have audio */
       margin-top: 20px;
@@ -260,7 +268,9 @@
 
     /* Sidebar styles */
     .sidebar {
-      flex: 1;
+      flex: 0 0 320px;   /* fixed base width */
+      width: 320px;
+      max-width: 340px;
       background: rgba(6, 8, 30, 0.95);
       border-radius: var(--radius-xl);
       padding: 20px 18px;
@@ -268,8 +278,7 @@
       box-shadow: var(--shadow-soft);
       display: flex;
       flex-direction: column;
-      max-height: 520px;
-      overflow: hidden;
+      /* let it stretch to match the card height */
     }
 
     .sidebar-title {
@@ -344,14 +353,22 @@
     }
 
     @media (max-width: 900px) {
+
       .layout {
         flex-direction: column;
       }
 
       .sidebar {
-        max-height: none;
+        flex: 1 1 auto;
+        width: 100%;
+        max-width: none;
         order: 2;
       }
+
+      .card {
+        width: 100%;        /* 👈 add this line */
+      }
+
     }
 
     @media (max-width: 600px) {
@@ -371,6 +388,7 @@
         <li class="placeholder">No prompts yet. Your history will appear here.</li>
       </ul>
     </aside>
+
     <div class="card">
       <div class="headline">Emotional Support Brian</div>
       <div class="sub">Type something magical and I’ll speak it out loud.</div>
