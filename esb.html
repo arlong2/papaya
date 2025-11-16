@@ -4,13 +4,18 @@
   <meta charset="UTF-8" />
   <title>Emotional Support Brian</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <!-- Dark toolbar / overscroll color for Safari/Chrome on mobile -->
+  <meta name="theme-color" content="#151527" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#151527">
 
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
 
   <style>
     :root {
       --bg-gradient: radial-gradient(circle at top, #9b5cff, #4328a3 45%, #151527 80%);
-      --card-bg: #0e1020;
+      --card-bg: rgba(14, 16, 32, 0.92);
       --accent: #9c7bff;
       --accent-strong: #7a4dff;
       --accent-soft: rgba(156, 123, 255, 0.2);
@@ -28,20 +33,32 @@
       padding: 0;
     }
 
-    html, body {
-      height: 100%;
+    :root {
+      --bg-gradient: radial-gradient(circle at top, #9b5cff, #4328a3 45%, #151527 80%);
+      /* ...rest stays the same... */
     }
 
+    html,
     body {
+      min-height: 100%;
+    }
+
+    html {
       background: var(--bg-gradient);
+    }
+
+    /* replace your existing body block with this */
+    body {
+      min-height: 100vh;
+      background: var(--bg-gradient);   /* was transparent */
       font-family: "Poppins", system-ui, sans-serif;
       color: var(--text-main);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
-      position: relative; /* for the falling layer */
-      overflow: hidden;   /* hide sprites when above the top */
+      padding: 24px 16px 32px;
+      position: relative;
+      overflow-x: hidden;
     }
 
     /* Full-screen layer for falling Brians (behind UI) */
@@ -65,35 +82,30 @@
     .layout {
       display: flex;
       gap: 24px;
-      width: min(1100px, 100%);
+      max-width: 1100px;
+      width: 100%;
       align-items: stretch;
       position: relative;
       z-index: 1; /* above falling Brians */
+      margin: 40px auto;
     }
 
     .card {
       flex: 1 1 auto;
-      background: var(--card-bg);
+      background: rgba(0, 0, 0, 0.25);   /* transparent */
       border-radius: var(--radius-xl);
       padding: 32px 28px 26px;
-      box-shadow: var(--shadow-soft);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(18px) saturate(150%);
+      -webkit-backdrop-filter: blur(18px) saturate(150%);
       position: relative;
-      overflow: hidden;
       display: flex;
       flex-direction: column;
     }
 
     .card::before {
-      content: "";
-      position: absolute;
-      inset: -40%;
-      background-image:
-        radial-gradient(circle at 0 0, rgba(156, 123, 255, 0.15), transparent 60%),
-        radial-gradient(circle at 100% 0, rgba(0, 198, 255, 0.15), transparent 60%);
-      opacity: 0.8;
-      pointer-events: none;
-      z-index: -1;
+      display: none !important;   /* remove interior glow gradients */
     }
 
     .headline {
@@ -259,7 +271,6 @@
       transition: background-color 200ms cubic-bezier(0.445, 0.05, 0.55, 0.95);
     }
 
-    /* Optional labels inside the switch (Off / On) */
     .toggle::before {
       content: '';
       position: absolute;
@@ -269,7 +280,7 @@
       color: #c2c5e5;
     }
     .toggle::after {
-      content: ''; /* content: 'More Brian'; */
+      content: '';
       position: absolute;
       right: -88px;
       top: 14px;
@@ -292,7 +303,6 @@
       box-shadow: 0 2px 6px rgba(0,0,0,.3);
       transition: all 400ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
       transform: rotate(-45deg);
-
     }
 
     .toggle__handler .crater {
@@ -407,10 +417,7 @@
     }
 
     .toggleWrapper .dn:checked + .toggle .toggle__handler {
-      /* Move to the right when enabled */
       transform: translate3d(40px, 0, 0) rotate(0);
-
-      /* Show Brian image when enabled */
       background-image: url("https://papaya.party/brian.png");
       background-size: cover;
       background-position: center;
@@ -515,15 +522,18 @@
     }
 
     /* Sidebar styles */
+    
     .sidebar {
       flex: 0 0 320px;
       width: 320px;
       max-width: 340px;
-      background: rgba(6, 8, 30, 0.95);
+      background: rgba(0, 0, 0, 0.25);   /* transparent */
       border-radius: var(--radius-xl);
       padding: 20px 18px;
       border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: var(--shadow-soft);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(18px) saturate(150%);
+      -webkit-backdrop-filter: blur(18px) saturate(150%);
       display: flex;
       flex-direction: column;
     }
@@ -919,7 +929,6 @@
         }
       }
 
-      // collisions
       for (let i = 0; i < brianSprites.length; i++) {
         for (let j = i + 1; j < brianSprites.length; j++) {
           const a = brianSprites[i];
