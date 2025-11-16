@@ -119,17 +119,17 @@
         .dot:nth-child(1) {
             left: calc(50% - 90px);
             top: 50%;
-            animation: spiral 3s ease-in-out forwards 0.2s;
+            animation: spiral 2s ease-in-out forwards 0.2s;
         }
         .dot:nth-child(2) {
             left: calc(50% - 30px);
             top: 50%;
-            animation: spiral 3s ease-in-out forwards 0.4s;
+            animation: spiral 2s ease-in-out forwards 0.4s;
         }
         .dot:nth-child(3) {
             left: calc(50% + 30px);
             top: 50%;
-            animation: spiral 3s ease-in-out forwards 0.6s;
+            animation: spiral 2s ease-in-out forwards 0.6s;
         }
         @keyframes spiral {
             0% {
@@ -213,6 +213,12 @@
             <div class="label">ChatGPT 5</div>
         </div>
         </a>
+        <a href="/esb.html">
+        <div class="tile">
+            <img src="https://papaya.party/esb.png" alt="ESB">
+            <div class="label">ChatGPT 5</div>
+        </div>
+        </a>
         <!-- Add more tiles as needed -->
     </div>
     <script>
@@ -220,7 +226,7 @@
             setTimeout(() => {
                 document.getElementById('overlay').style.display = 'none';
                 document.getElementById('container').style.opacity = '1';
-            }, 3500); // Adjust the timing to match the animation duration
+            }, 1500); // Adjust the timing to match the animation duration
         });
 
         document.addEventListener('mousemove', (e) => {
