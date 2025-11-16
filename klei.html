@@ -14,6 +14,61 @@
     }
     
     canvas { display: block; }
+
+    /* Glass bubble with papa */
+    .glass-bubble-container {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 3;
+    }
+
+    .glass-bubble-link {
+
+      width:10rem;height:10rem;border-radius:50%;
+      background:rgba(255,255,255,.08);border:2px solid transparent;
+      box-shadow:0 0 0 1px rgba(255,255,255,.6),0 16px 32px rgba(0,0,0,.12);
+      backdrop-filter:url(#frosted);-webkit-backdrop-filter:url(#frosted);
+      display:grid;place-items:center;cursor:pointer;outline:0;
+      outline:0;
+      border-radius:50%;
+      border-width: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 78px;
+      height: 78px;
+      overflow: hidden;
+      cursor: pointer;
+      transition:
+        transform 0.25s ease-out,
+        box-shadow 0.25s ease-out,
+        background 0.25s ease-out;
+    }
+
+    .glass-bubble-link::before {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border-radius: inherit;
+      mix-blend-mode: screen;
+      opacity: 0.85;
+      pointer-events: none;
+    }
+
+    .glass-bubble-img {
+      position: relative;
+      width: 64%;
+      height: 64%;
+      object-fit: contain;
+      transform: translateY(0) scale(1);
+      transition:
+        transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+    .glass-bubble-link:hover {
+      transform:rotate(10deg)
+    }
     
     #stars {
       position: fixed;
@@ -204,6 +259,17 @@
         Lon <input id="lonB" type="number" value="-98" step="0.01">
       </div>
     </div>
+  </div>
+
+  <!-- Glass bubble with papa in bottom-right -->
+  <div class="glass-bubble-container">
+    <a href="/" class="glass-bubble-link" aria-label="Go to home page">
+      <img
+        src="https://papaya.party/android-chrome-512x512.png"
+        alt="Papaya home"
+        class="glass-bubble-img"
+      />
+    </a>
   </div>
 
   <script type="module">
