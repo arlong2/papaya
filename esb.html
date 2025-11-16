@@ -45,6 +45,7 @@
       position: relative;
       min-height: 100%;
       overscroll-behavior-x: none;
+      background-color: #151527; /* ensure far-back layer is never white */
     }
 
     * {
@@ -53,13 +54,17 @@
     }
 
     html {
-      background: var(--bg-gradient);
+      background-color: #151527;              /* solid base for iOS overscroll */
+      background-image: var(--bg-gradient);   /* gradient visual */
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-attachment: fixed;
     }
 
-    /* replace your existing body block with this */
+    /* body is now transparent so the html gradient shows through everywhere */
     body {
       min-height: 100vh;
-      background: var(--bg-gradient);   /* was transparent */
+      background: transparent !important;
       font-family: "Poppins", system-ui, sans-serif;
       color: var(--text-main);
       display: flex;
@@ -101,7 +106,7 @@
 
     .card {
       flex: 1 1 auto;
-      background: rgba(0, 0, 0, 0.25);   /* transparent */
+      background: rgba(0, 0, 0, 0.25);   /* transparent glass */
       border-radius: var(--radius-xl);
       padding: 32px 28px 26px;
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -531,12 +536,11 @@
     }
 
     /* Sidebar styles */
-    
     .sidebar {
       flex: 0 0 320px;
       width: 320px;
       max-width: 340px;
-      background: rgba(0, 0, 0, 0.25);   /* transparent */
+      background: rgba(0, 0, 0, 0.25);   /* transparent glass */
       border-radius: var(--radius-xl);
       padding: 20px 18px;
       border: 1px solid rgba(255, 255, 255, 0.12);
