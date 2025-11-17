@@ -802,348 +802,450 @@
   </div>
 
   <script>
-    const API_URL = "https://isat.hellobrian.io:8443/tts";
-    const VOICE_ID = "d2c5774a-b5a1-4657-8692-80ac302353a9";
+  const API_URL = "https://isat.hellobrian.io:8443/tts";
+  const VOICE_ID = "d2c5774a-b5a1-4657-8692-80ac302353a9";
 
-    const form = document.getElementById("ttsForm");
-    const input = document.getElementById("transcriptInput");
-    const btn = document.getElementById("submitBtn");
-    const errorMessage = document.getElementById("errorMessage");
-    const overlay = document.getElementById("loadingOverlay");
-    const playbackRow = document.getElementById("playbackRow");
-    const audio = document.getElementById("audioPlayer");
-    const statusText = document.getElementById("statusText");
-    const recentList = document.getElementById("recentList");
-    const moreBrianToggle = document.getElementById("moreBrianToggle");
+  const form = document.getElementById("ttsForm");
+  const input = document.getElementById("transcriptInput");
+  const btn = document.getElementById("submitBtn");
+  const errorMessage = document.getElementById("errorMessage");
+  const overlay = document.getElementById("loadingOverlay");
+  const playbackRow = document.getElementById("playbackRow");
+  const audio = document.getElementById("audioPlayer");
+  const statusText = document.getElementById("statusText");
+  const recentList = document.getElementById("recentList");
+  const moreBrianToggle = document.getElementById("moreBrianToggle");
 
-    let moreBrianEnabled = false;
+  // --- Local storage keys ---
+  const BRIAN_COUNT_KEY = "esb_brian_count";
+  const BRIAN_TOGGLE_KEY = "esb_more_brian_enabled";
+
+  let moreBrianEnabled = false;
+  let currentObjectUrl = null;
+  let recentPrompts = [];
+
+  // ---- UI helpers ----
+  function setLoading(isLoading) {
+    btn.disabled = isLoading;
+    overlay.classList.toggle("visible", isLoading);
+  }
+
+  function showPlayback() {
+    playbackRow.style.display = "block";
+  }
+
+  function setError(msg) {
+    errorMessage.textContent = msg || "";
+  }
+
+  // --- Recent prompts helpers ---
+  function saveRecent() {
+    try {
+      localStorage.setItem("esb_recent_prompts", JSON.stringify(recentPrompts));
+    } catch (err) {
+      console.warn("Unable to save recent prompts:", err);
+    }
+  }
+
+  function loadRecent() {
+    try {
+      const stored = localStorage.getItem("esb_recent_prompts");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          recentPrompts = parsed;
+        }
+      }
+    } catch (err) {
+      console.warn("Unable to load recent prompts:", err);
+    }
+    renderRecent();
+  }
+
+  function addRecentPrompt(text) {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    if (recentPrompts[0] === trimmed) return;
+
+    recentPrompts.unshift(trimmed);
+    if (recentPrompts.length > 8) {
+      recentPrompts.pop();
+    }
+    renderRecent();
+    saveRecent();
+  }
+
+  function renderRecent() {
+    recentList.innerHTML = "";
+
+    if (!recentPrompts.length) {
+      const li = document.createElement("li");
+      li.className = "placeholder";
+      li.textContent = "No prompts yet. Your history will appear here.";
+      recentList.appendChild(li);
+      return;
+    }
+
+    recentPrompts.forEach((prompt) => {
+      const li = document.createElement("li");
+      li.className = "recent-item";
+
+      const btnEl = document.createElement("button");
+      btnEl.type = "button";
+      btnEl.className = "recent-btn";
+      btnEl.textContent =
+        prompt.length > 80 ? prompt.slice(0, 77) + "…" : prompt;
+      btnEl.title = prompt;
+
+      btnEl.addEventListener("click", () => {
+        input.value = prompt;
+        input.focus();
+        input.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+
+      li.appendChild(btnEl);
+      recentList.appendChild(li);
+    });
+  }
+
+  loadRecent();
+
+  // --- Falling Brian physics setup ---
+  const brianLayer = document.getElementById("brianLayer");
+  const BRIAN_IMG_SRC = "https://papaya.party/brian.png";
+  const BRIAN_BASE_WIDTH = 80;
+  const GRAVITY = 0.4;
+  const BOUNCE = 0.35;
+  const GROUND_FRICTION = 0.9;
+  const AIR_FRICTION = 0.999;
+
+  const brianImage = new Image();
+  brianImage.src = BRIAN_IMG_SRC;
+
+  const brianSprites = [];
+  let brianAnimating = false;
+
+  // --- Persisted Brian count ---
+  let brianCount = 0;
+
+  function loadBrianCount() {
+    try {
+      const stored = localStorage.getItem(BRIAN_COUNT_KEY);
+      if (stored != null) {
+        const parsed = parseInt(stored, 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          brianCount = parsed;
+        }
+      }
+    } catch (e) {
+      console.warn("Unable to load Brian count:", e);
+    }
+  }
+
+  function saveBrianCount() {
+    try {
+      localStorage.setItem(BRIAN_COUNT_KEY, String(brianCount));
+    } catch (e) {
+      console.warn("Unable to save Brian count:", e);
+    }
+  }
+
+  function spawnBrian() {
+    if (!brianLayer) return;
+    const layerRect = brianLayer.getBoundingClientRect();
+    const layerWidth = layerRect.width;
+    const aspect =
+      brianImage.naturalWidth > 0
+        ? brianImage.naturalHeight / brianImage.naturalWidth
+        : 1;
+
+    const w = BRIAN_BASE_WIDTH;
+    const h = BRIAN_BASE_WIDTH * aspect;
+
+    const minX = 0;
+    const maxX = Math.max(minX, layerWidth - w);
+    const startX = Math.random() * (maxX - minX) + minX;
+    const startY = -h - 20;
+
+    const initialAngle = Math.random() * 40 - 20;
+    const angularVelocity = (Math.random() - 0.5) * 1.2;
+
+    const sprite = document.createElement("img");
+    sprite.src = BRIAN_IMG_SRC;
+    sprite.alt = "Falling Brian";
+    sprite.className = "brian-sprite";
+    sprite.style.width = w + "px";
+    sprite.style.height = h + "px";
+    sprite.style.left = startX + "px";
+    sprite.style.top = startY + "px";
+
+    brianLayer.appendChild(sprite);
+
+    brianSprites.push({
+      x: startX,
+      y: startY,
+      vx: (Math.random() - 0.5) * 1.2,
+      vy: 0,
+      w,
+      h,
+      angle: initialAngle,
+      av: angularVelocity,
+      el: sprite,
+    });
+
+    if (!brianAnimating) {
+      brianAnimating = true;
+      requestAnimationFrame(updateBrianSprites);
+    }
+  }
+
+  function updateBrianSprites() {
+    if (!brianLayer) {
+      brianAnimating = false;
+      return;
+    }
+
+    const layerRect = brianLayer.getBoundingClientRect();
+    const width = layerRect.width;
+    const height = layerRect.height;
+
+    for (let i = 0; i < brianSprites.length; i++) {
+      const s = brianSprites[i];
+
+      s.vy += GRAVITY;
+      s.vx *= AIR_FRICTION;
+
+      s.x += s.vx;
+      s.y += s.vy;
+
+      const ground = height - s.h;
+      const isOnGround = s.y >= ground - 0.5;
+
+      if (!isOnGround) {
+        s.angle += s.av;
+      } else {
+        s.av *= 0.9;
+        if (Math.abs(s.av) < 0.02) s.av = 0;
+        s.angle += s.av;
+      }
+
+      if (s.x < 0) {
+        s.x = 0;
+        s.vx = -s.vx * BOUNCE;
+      } else if (s.x + s.w > width) {
+        s.x = width - s.w;
+        s.vx = -s.vx * BOUNCE;
+      }
+
+      if (s.y > ground) {
+        s.y = ground;
+        if (Math.abs(s.vy) > 0.5) {
+          s.vy = -s.vy * BOUNCE;
+        } else {
+          s.vy = 0;
+        }
+        s.vx *= GROUND_FRICTION;
+        if (Math.abs(s.vx) < 0.02) s.vx = 0;
+      }
+    }
+
+    // Simple collision resolution
+    for (let i = 0; i < brianSprites.length; i++) {
+      for (let j = i + 1; j < brianSprites.length; j++) {
+        const a = brianSprites[i];
+        const b = brianSprites[j];
+
+        const axCenter = a.x + a.w / 2;
+        const ayCenter = a.y + a.h / 2;
+        const bxCenter = b.x + b.w / 2;
+        const byCenter = b.y + b.h / 2;
+
+        const dx = axCenter - bxCenter;
+        const dy = ayCenter - byCenter;
+        const overlapX = a.w / 2 + b.w / 2 - Math.abs(dx);
+        const overlapY = a.h / 2 + b.h / 2 - Math.abs(dy);
+
+        if (overlapX > 0 && overlapY > 0) {
+          if (overlapX < overlapY) {
+            const push = overlapX / 2;
+            const sign = dx > 0 ? 1 : -1;
+            a.x += push * sign;
+            b.x -= push * sign;
+
+            const tempVx = a.vx;
+            a.vx = b.vx * BOUNCE;
+            b.vx = tempVx * BOUNCE;
+          } else {
+            const push = overlapY / 2;
+            const sign = dy > 0 ? 1 : -1;
+            a.y += push * sign;
+            b.y -= push * sign;
+
+            const tempVy = a.vy;
+            a.vy = b.vy * BOUNCE;
+            b.vy = tempVy * BOUNCE;
+          }
+        }
+      }
+    }
+
+    let anyMoving = false;
+    for (const s of brianSprites) {
+      s.el.style.left = s.x + "px";
+      s.el.style.top = s.y + "px";
+      s.el.style.transform = `rotate(${s.angle}deg)`;
+
+      if (Math.abs(s.vx) + Math.abs(s.vy) + Math.abs(s.av) > 0.05) {
+        anyMoving = true;
+      }
+    }
+
+    if (anyMoving) {
+      requestAnimationFrame(updateBrianSprites);
+    } else {
+      brianAnimating = false;
+    }
+  }
+
+  // --- Fade out & clear all Brians ---
+  function clearAllBriansWithFade() {
+    for (const s of brianSprites) {
+      const el = s.el;
+      // Add a gentle fade + slight drop
+      el.style.transition = "opacity 0.5s ease-out, transform 0.5s ease-out";
+      el.style.opacity = "0";
+      el.style.transform = `${el.style.transform || ""} translateY(20px) scale(0.9)`;
+      setTimeout(() => {
+        if (el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+      }, 500);
+    }
+    brianSprites.length = 0;
+    brianAnimating = false;
+  }
+
+  // --- Init: load toggle + Brian count, then schedule staggered spawn ---
+  function initToggle() {
+    try {
+      const storedToggle = localStorage.getItem(BRIAN_TOGGLE_KEY);
+      if (storedToggle === "true") {
+        moreBrianEnabled = true;
+        moreBrianToggle.checked = true;
+      }
+    } catch (e) {
+      console.warn("Unable to load toggle state");
+    }
+
     moreBrianToggle.addEventListener("change", () => {
       moreBrianEnabled = moreBrianToggle.checked;
-    });
-
-    let currentObjectUrl = null;
-    let recentPrompts = [];
-
-    function setLoading(isLoading) {
-      btn.disabled = isLoading;
-      overlay.classList.toggle("visible", isLoading);
-    }
-
-    function showPlayback() {
-      playbackRow.style.display = "block";
-    }
-
-    function setError(msg) {
-      errorMessage.textContent = msg || "";
-    }
-
-    // --- Recent prompts helpers ---
-    function saveRecent() {
       try {
-        localStorage.setItem("esb_recent_prompts", JSON.stringify(recentPrompts));
-      } catch (err) {
-        console.warn("Unable to save recent prompts:", err);
-      }
-    }
-
-    function loadRecent() {
-      try {
-        const stored = localStorage.getItem("esb_recent_prompts");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed)) {
-            recentPrompts = parsed;
-          }
-        }
-      } catch (err) {
-        console.warn("Unable to load recent prompts:", err);
-      }
-      renderRecent();
-    }
-
-    function addRecentPrompt(text) {
-      const trimmed = text.trim();
-      if (!trimmed) return;
-      if (recentPrompts[0] === trimmed) return;
-
-      recentPrompts.unshift(trimmed);
-      if (recentPrompts.length > 8) {
-        recentPrompts.pop();
-      }
-      renderRecent();
-      saveRecent();
-    }
-
-    function renderRecent() {
-      recentList.innerHTML = "";
-
-      if (!recentPrompts.length) {
-        const li = document.createElement("li");
-        li.className = "placeholder";
-        li.textContent = "No prompts yet. Your history will appear here.";
-        recentList.appendChild(li);
-        return;
+        localStorage.setItem(BRIAN_TOGGLE_KEY, String(moreBrianEnabled));
+      } catch (e) {
+        console.warn("Unable to save toggle state");
       }
 
-      recentPrompts.forEach((prompt) => {
-        const li = document.createElement("li");
-        li.className = "recent-item";
-
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "recent-btn";
-        btn.textContent = prompt.length > 80 ? prompt.slice(0, 77) + "…" : prompt;
-        btn.title = prompt;
-
-        btn.addEventListener("click", () => {
-          input.value = prompt;
-          input.focus();
-          input.scrollIntoView({ behavior: "smooth", block: "center" });
-        });
-
-        li.appendChild(btn);
-        recentList.appendChild(li);
-      });
-    }
-
-    loadRecent();
-
-    // --- Falling Brian physics setup ---
-    const brianLayer = document.getElementById("brianLayer");
-    const BRIAN_IMG_SRC = "https://papaya.party/brian.png";
-    const BRIAN_BASE_WIDTH = 80;
-    const GRAVITY = 0.4;
-    const BOUNCE = 0.35;
-    const GROUND_FRICTION = 0.9;
-    const AIR_FRICTION = 0.999;
-
-    const brianImage = new Image();
-    brianImage.src = BRIAN_IMG_SRC;
-
-    const brianSprites = [];
-    let brianAnimating = false;
-
-    function spawnBrian() {
-      if (!brianLayer) return;
-      const layerRect = brianLayer.getBoundingClientRect();
-      const layerWidth = layerRect.width;
-      const aspect =
-        brianImage.naturalWidth > 0
-          ? brianImage.naturalHeight / brianImage.naturalWidth
-          : 1;
-
-      const w = BRIAN_BASE_WIDTH;
-      const h = BRIAN_BASE_WIDTH * aspect;
-
-      const minX = 0;
-      const maxX = Math.max(minX, layerWidth - w);
-      const startX = Math.random() * (maxX - minX) + minX;
-      const startY = -h - 20;
-
-      const initialAngle = (Math.random() * 40) - 20;
-      const angularVelocity = (Math.random() - 0.5) * 1.2;
-
-      const sprite = document.createElement("img");
-      sprite.src = BRIAN_IMG_SRC;
-      sprite.alt = "Falling Brian";
-      sprite.className = "brian-sprite";
-      sprite.style.width = w + "px";
-      sprite.style.height = h + "px";
-      sprite.style.left = startX + "px";
-      sprite.style.top = startY + "px";
-
-      brianLayer.appendChild(sprite);
-
-      brianSprites.push({
-        x: startX,
-        y: startY,
-        vx: (Math.random() - 0.5) * 1.2,
-        vy: 0,
-        w,
-        h,
-        angle: initialAngle,
-        av: angularVelocity,
-        el: sprite,
-      });
-
-      if (!brianAnimating) {
-        brianAnimating = true;
-        requestAnimationFrame(updateBrianSprites);
-      }
-    }
-
-    function updateBrianSprites() {
-      if (!brianLayer) {
-        brianAnimating = false;
-        return;
-      }
-
-      const layerRect = brianLayer.getBoundingClientRect();
-      const width = layerRect.width;
-      const height = layerRect.height;
-
-      for (let i = 0; i < brianSprites.length; i++) {
-        const s = brianSprites[i];
-
-        s.vy += GRAVITY;
-        s.vx *= AIR_FRICTION;
-
-        s.x += s.vx;
-        s.y += s.vy;
-
-        const ground = height - s.h;
-        const isOnGround = s.y >= ground - 0.5;
-
-        if (!isOnGround) {
-          s.angle += s.av;
-        } else {
-          s.av *= 0.9;
-          if (Math.abs(s.av) < 0.02) s.av = 0;
-          s.angle += s.av;
-        }
-
-        if (s.x < 0) {
-          s.x = 0;
-          s.vx = -s.vx * BOUNCE;
-        } else if (s.x + s.w > width) {
-          s.x = width - s.w;
-          s.vx = -s.vx * BOUNCE;
-        }
-
-        if (s.y > ground) {
-          s.y = ground;
-          if (Math.abs(s.vy) > 0.5) {
-            s.vy = -s.vy * BOUNCE;
-          } else {
-            s.vy = 0;
-          }
-          s.vx *= GROUND_FRICTION;
-          if (Math.abs(s.vx) < 0.02) s.vx = 0;
-        }
-      }
-
-      for (let i = 0; i < brianSprites.length; i++) {
-        for (let j = i + 1; j < brianSprites.length; j++) {
-          const a = brianSprites[i];
-          const b = brianSprites[j];
-
-          const axCenter = a.x + a.w / 2;
-          const ayCenter = a.y + a.h / 2;
-          const bxCenter = b.x + b.w / 2;
-          const byCenter = b.y + b.h / 2;
-
-          const dx = axCenter - bxCenter;
-          const dy = ayCenter - byCenter;
-          const overlapX = a.w / 2 + b.w / 2 - Math.abs(dx);
-          const overlapY = a.h / 2 + b.h / 2 - Math.abs(dy);
-
-          if (overlapX > 0 && overlapY > 0) {
-            if (overlapX < overlapY) {
-              const push = overlapX / 2;
-              const sign = dx > 0 ? 1 : -1;
-              a.x += push * sign;
-              b.x -= push * sign;
-
-              const tempVx = a.vx;
-              a.vx = b.vx * BOUNCE;
-              b.vx = tempVx * BOUNCE;
-            } else {
-              const push = overlapY / 2;
-              const sign = dy > 0 ? 1 : -1;
-              a.y += push * sign;
-              b.y -= push * sign;
-
-              const tempVy = a.vy;
-              a.vy = b.vy * BOUNCE;
-              b.vy = tempVy * BOUNCE;
-            }
-          }
-        }
-      }
-
-      let anyMoving = false;
-      for (const s of brianSprites) {
-        s.el.style.left = s.x + "px";
-        s.el.style.top = s.y + "px";
-        s.el.style.transform = `rotate(${s.angle}deg)`;
-
-        if (Math.abs(s.vx) + Math.abs(s.vy) + Math.abs(s.av) > 0.05) {
-          anyMoving = true;
-        }
-      }
-
-      if (anyMoving) {
-        requestAnimationFrame(updateBrianSprites);
-      } else {
-        brianAnimating = false;
-      }
-    }
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      setError("");
-
-      const text = input.value.trim();
-      if (!text) {
-        setError("Please enter some text first.");
-        return;
-      }
-
-      addRecentPrompt(text);
-
-      if (moreBrianEnabled) {
-        spawnBrian();
-      }
-
-      setLoading(true);
-      statusText.textContent = "Contacting TTS server…";
-
-      try {
-        const resp = await fetch(API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "audio/wav,*/*"
-          },
-          body: JSON.stringify({
-            transcript: text,
-            voice_id: VOICE_ID
-          })
-        });
-
-        if (!resp.ok) {
-          throw new Error("Server returned " + resp.status);
-        }
-
-        const blob = await resp.blob();
-
-        if (blob.type && !blob.type.startsWith("audio") &&
-            !blob.type.startsWith("application/octet-stream")) {
-          throw new Error("Unexpected content type: " + blob.type);
-        }
-
-        if (currentObjectUrl) {
-          URL.revokeObjectURL(currentObjectUrl);
-        }
-        currentObjectUrl = URL.createObjectURL(blob);
-        audio.src = currentObjectUrl;
-
-        showPlayback();
-
-        try {
-          await audio.play();
-          statusText.textContent = "Playing audio. 🎧";
-        } catch (playErr) {
-          statusText.textContent = "Audio ready. Press play to listen.";
-        }
-      } catch (err) {
-        console.error("TTS error:", err);
-        setError("Could not fetch audio (CORS or server error). Check console/network.");
-        statusText.textContent = "Audio not available.";
-      } finally {
-        setLoading(false);
+      // When turned OFF: fade out & remove all Brians and reset count
+      if (!moreBrianEnabled) {
+        clearAllBriansWithFade();
+        brianCount = 0;
+        saveBrianCount();
       }
     });
-  </script>
+  }
+
+  function initBriansOnLoad() {
+    loadBrianCount();
+    // Only auto-rain on load if toggle is ON
+    if (brianCount > 0 && moreBrianEnabled) {
+      const totalDuration = 4000; // 10 seconds
+      const interval = totalDuration / brianCount;
+
+      for (let i = 0; i < brianCount; i++) {
+        setTimeout(() => {
+          spawnBrian();
+        }, i * interval);
+      }
+    }
+  }
+
+  initToggle();
+  initBriansOnLoad();
+
+  // --- Form submit / TTS logic ---
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    setError("");
+
+    const text = input.value.trim();
+    if (!text) {
+      setError("Please enter some text first.");
+      return;
+    }
+
+    addRecentPrompt(text);
+
+    // Only spawn + count Brian when toggle is enabled
+    if (moreBrianEnabled) {
+      spawnBrian();
+      brianCount += 1;
+      saveBrianCount();
+    }
+
+    setLoading(true);
+    statusText.textContent = "Contacting TTS server…";
+
+    try {
+      const resp = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "audio/wav,*/*",
+        },
+        body: JSON.stringify({
+          transcript: text,
+          voice_id: VOICE_ID,
+        }),
+      });
+
+      if (!resp.ok) {
+        throw new Error("Server returned " + resp.status);
+      }
+
+      const blob = await resp.blob();
+
+      if (
+        blob.type &&
+        !blob.type.startsWith("audio") &&
+        !blob.type.startsWith("application/octet-stream")
+      ) {
+        throw new Error("Unexpected content type: " + blob.type);
+      }
+
+      if (currentObjectUrl) {
+        URL.revokeObjectURL(currentObjectUrl);
+      }
+      currentObjectUrl = URL.createObjectURL(blob);
+      audio.src = currentObjectUrl;
+
+      showPlayback();
+
+      try {
+        await audio.play();
+        statusText.textContent = "Playing audio. 🎧";
+      } catch (playErr) {
+        statusText.textContent = "Audio ready. Press play to listen.";
+      }
+    } catch (err) {
+      console.error("TTS error:", err);
+      setError(
+        "Could not fetch audio (CORS or server error). Check console/network."
+      );
+      statusText.textContent = "Audio not available.";
+    } finally {
+      setLoading(false);
+    }
+  });
+</script>
 </body>
 </html>
