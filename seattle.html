@@ -141,6 +141,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      color: var(--text-main);
     }
 
     #sidebar h1 span.logo-dot {
@@ -182,18 +183,16 @@
       overflow-x: hidden;
       flex: 1;
 
-      /* NEW: push scrollbar outward */
-      padding-right: 14px;      /* space so cards don’t get overlapped */
-      margin-right: -10px;      /* pulls scrollbar into right gutter */
+      /* scrollbar shifted right so it doesn’t overlap cards */
+      padding-right: 14px;
+      margin-right: -10px;
 
       scrollbar-width: thin;
       scrollbar-color: rgba(193, 244, 255, 0.8) transparent;
     }
 
-    #poi-list::-webkit-scrollbar {
-      width: 8px;
-    }
-
+    #poi-list::-webkit-scrollbar { width: 8px; }
+    #poi-list::-webkit-scrollbar-track { background: transparent; }
     #poi-list::-webkit-scrollbar-thumb {
       background: linear-gradient(
         180deg,
@@ -203,10 +202,7 @@
       border-radius: 999px;
     }
 
-    
-
-    /* SIDEBAR POI cards styled like popup */
-
+    /* SIDEBAR POI cards – white */
     .poi-item {
       position: relative;
       padding: 0;
@@ -214,36 +210,23 @@
       border-radius: 18px;
       cursor: pointer;
       overflow: hidden;
-      background:
-        radial-gradient(circle at 0 0, rgba(193, 244, 255, 0.20), transparent 60%),
-        radial-gradient(circle at 100% 100%, rgba(0, 143, 158, 0.22), transparent 60%),
-        rgba(0, 56, 69, 0.96);
-      border: 1px solid rgba(193, 244, 255, 0.55);
+      background: #ffffff;
+      border: 2px solid rgba(0, 0, 0, 1);
       transition:
         transform 0.16s ease,
-        background 0.18s ease,
         box-shadow 0.18s ease,
         border-color 0.18s ease,
         opacity 0.18s ease;
-      opacity: 0.98;
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+      opacity: 0.99;
     }
 
     .poi-item:hover {
-      border-color: rgba(255, 255, 255, 0.9);
-      box-shadow:
-        0 4px 8px rgba(0, 25, 33, 0.9),
-        0 0 2px rgba(255, 255, 255, 0.7);
+      border-color: rgba(0, 0, 0, 0.14);
       opacity: 1;
     }
 
     .poi-item.active {
-      border-color: rgba(255, 255, 255, 1);
-      background:
-        radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.30), transparent 60%),
-        radial-gradient(circle at 100% 100%, rgba(0, 196, 204, 0.40), transparent 65%),
-        rgba(0, 63, 76, 0.98);
+      border-color: var(--accent-light);
     }
 
     .poi-photo {
@@ -264,29 +247,28 @@
     }
 
     .poi-star-icon {
-      width: 16px;
-      height: 16px;
+      width: 20px;
+      height: 20px;
       border-radius: 999px;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      border: 1px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
       flex-shrink: 0;
     }
 
     .poi-title {
-      font-size: 13px;
+      font-size: 17px;
       font-weight: 600;
       margin-bottom: 2px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      color: #12333a;
     }
 
     .poi-subtitle {
-      font-size: 12px;
-      color: var(--text-muted);
+      font-size: 14px;
+      color: #5c7d86;
       margin-bottom: 2px;
       white-space: nowrap;
       overflow: hidden;
@@ -294,8 +276,8 @@
     }
 
     .poi-desc {
-      font-size: 11px;
-      color: var(--text-softer);
+      font-size: 12px;
+      color: #4a6b73;
       line-height: 1.3;
     }
 
@@ -348,7 +330,7 @@
       line-height: 24px !important;
     }
 
-    /* MAKE LEAFLET POPUP WRAPPER TRANSPARENT */
+    /* Popup container transparent, card handles visuals */
     .leaflet-popup-content-wrapper,
     .leaflet-popup-tip {
       background: transparent;
@@ -402,14 +384,12 @@
     }
 
     .popup-small-icon {
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
       border-radius: 999px;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      border: 2px solid #ffffff;
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
     }
 
     .popup-title {
@@ -500,7 +480,7 @@
         "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=800&q=80";
 
       const iconUrl =
-        loc.icon || "http://papaya.party/img/sea-7.png";
+        loc.icon || "http://papaya.party/img/sea-star-big.png";
 
       const subtitle = loc.subtitle || "";
       const desc = loc.description || "";
@@ -536,18 +516,16 @@
       `;
     }
 
-    // Scroll sidebar to a given POI id
+    // Scroll sidebar to a given POI id (only the sidebar scrolls)
     function scrollToPoi(id) {
       const list = document.getElementById("poi-list");
       const item = list.querySelector(`.poi-item[data-id="${id}"]`);
       if (!list || !item) return;
 
-      // Get relative position of the item inside the list
       const listRect = list.getBoundingClientRect();
       const itemRect = item.getBoundingClientRect();
       const offset = itemRect.top - listRect.top;
 
-      // Scroll so the item is roughly centered in the visible area
       const targetScrollTop =
         list.scrollTop + offset - (list.clientHeight / 2 - item.clientHeight / 2);
 
@@ -595,8 +573,8 @@
           loc.photo ||
           "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=800&q=80";
 
-        const iconUrl =
-          loc.icon || "http://papaya.party/img/sea-7.png";
+        const icon2Url =
+          loc.icon || "http://papaya.party/img/sea-star-big.png";
 
         const stars = Number(loc.stars) || 0;
         let sidebarStarsHtml = "";
@@ -604,7 +582,7 @@
           sidebarStarsHtml += `
             <div
               class="poi-star-icon"
-              style="background-image:url('${iconUrl}')"
+              style="background-image:url('${icon2Url}')"
             ></div>`;
         }
 
