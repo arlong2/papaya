@@ -202,7 +202,6 @@
       border-radius: 999px;
     }
 
-    /* SIDEBAR POI cards – white */
     .poi-item {
       position: relative;
       padding: 0;
@@ -231,7 +230,7 @@
 
     .poi-photo {
       width: 100%;
-      height: 110px;
+      height: 220px;
       object-fit: cover;
       display: block;
     }
@@ -286,8 +285,14 @@
       flex: 1;
       position: relative;
       height: 100%;
-      background:
-        radial-gradient(circle at 20% 0, rgba(193, 244, 255, 0.18), transparent 60%);
+    }
+
+    #map-tint {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: rgba(0, 170, 190, 0.12);
+      mix-blend-mode: soft-light;
     }
 
     #map-inner {
@@ -302,7 +307,7 @@
     }
 
     .leaflet-tile {
-      filter: hue-rotate(-8deg) saturate(1.05) brightness(0.98);
+      filter: saturate(1.1) brightness(1.05) contrast(1.05);
     }
 
     .leaflet-control-zoom {
@@ -330,7 +335,6 @@
       line-height: 24px !important;
     }
 
-    /* Popup container transparent, card handles visuals */
     .leaflet-popup-content-wrapper,
     .leaflet-popup-tip {
       background: transparent;
@@ -348,8 +352,6 @@
       padding-top: 6px;
       padding-right: 10px;
     }
-
-    /* Popup card */
 
     .popup-card {
       width: 290px;
@@ -410,15 +412,71 @@
     }
 
     @media (max-width: 768px) {
-      body { padding: 10px; }
-      .app-shell { flex-direction: column; border-radius: 22px; }
+      body {
+        padding: 0;
+      }
+
+      .popup-card-photo,
+      .popup-description,
+      .leaflet-popup-close-button {
+        display: none !important;
+      }
+
+      .app-shell {
+        flex-direction: column;
+        border-radius: 0;
+      }
+
       #sidebar {
         width: 100%;
-        height: 44%;
+        height: 100%;
         border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+        border-bottom: none;
       }
-      #map { height: 56%; }
+
+      #map {
+        width: 100%;
+        height: 100%;
+      }
+
+      #map {
+        display: none;
+      }
+
+      body.show-map #sidebar {
+        display: none;
+      }
+
+      body.show-map #map {
+        display: block;
+      }
+
+      #mobile-back-button {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 1000;
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: none;
+        font-size: 20px;
+        font-weight: 500;
+        background: rgba(0, 63, 76, 0.94);
+        color: #e0f7fb;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+        display: none;
+        cursor: pointer;
+      }
+
+      body.show-map #mobile-back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .leaflet-control-zoom {
+        display: none !important;
+      }
     }
   </style>
 </head>
@@ -437,7 +495,9 @@
     </div>
 
     <div id="map">
+      <button id="mobile-back-button" type="button">Back to list</button>
       <div id="map-inner"></div>
+      <div id="map-tint"></div>
     </div>
   </div>
 
@@ -463,13 +523,57 @@
       maxZoom: 19
     }).addTo(map);
 
-    // Map pin icon
+    // Helpers for mobile
+    function isMobile() {
+      return window.matchMedia("(max-width: 768px)").matches;
+    }
+
+    var mobileBackButton = document.getElementById("mobile-back-button");
+    if (mobileBackButton) {
+      mobileBackButton.addEventListener("click", function () {
+        document.body.classList.remove("show-map");
+        setTimeout(function () {
+          map.invalidateSize();
+        }, 250);
+      });
+    }
+
+      // Map pin icons
     const seattleFlagIcon = L.icon({
-      iconUrl: "http://papaya.party/img/sea-6.png",
-      iconSize: [64, 64],
-      iconAnchor: [32, 32],
+      iconUrl: "http://papaya.party/img/sea-pin.png",
+      iconSize: [32, 45],
+      iconAnchor: [16, 22],
       popupAnchor: [0, -28]
     });
+
+    const selectedIcon = L.icon({
+      iconUrl: "https://papaya.party/img/sea-pin-red.png",
+      iconSize: [32, 45],
+      iconAnchor: [16, 22],
+      popupAnchor: [0, -28]
+    });
+
+    const pinOne = L.icon({
+      iconUrl: "http://papaya.party/img/sea-pin-one.png",
+      iconSize: [32, 45],
+      iconAnchor: [16, 22],
+      popupAnchor: [0, -28]
+    });
+
+    const pinTwo = L.icon({
+      iconUrl: "http://papaya.party/img/sea-pin-two.png",
+      iconSize: [32, 45],
+      iconAnchor: [16, 22],
+      popupAnchor: [0, -28]
+    });
+
+    const pinThree = L.icon({
+      iconUrl: "https://papaya.party/img/sea-pin-three.png",
+      iconSize: [32, 45],
+      iconAnchor: [16, 22],
+      popupAnchor: [0, -28]
+    });
+
 
     const markersById = {};
     let locations = [];
@@ -483,44 +587,41 @@
         loc.icon || "http://papaya.party/img/sea-star-big.png";
 
       const subtitle = loc.subtitle || "";
-      const desc = loc.description || "";
       const stars = Number(loc.stars) || 0;
 
       let starsHtml = "";
       for (let i = 0; i < stars; i++) {
-        starsHtml += `
-          <div
-            class="popup-small-icon"
-            style="background-image:url('${iconUrl}')"
-          ></div>`;
+        starsHtml +=
+          '<div class="popup-small-icon" style="background-image:url(\'' +
+          iconUrl +
+          '\')"></div>';
       }
 
-      return `
-        <div class="popup-card">
-          <img
-            src="${photo}"
-            alt="${loc.name}"
-            class="popup-card-photo"
-          />
-          <div class="popup-card-body">
+      let html = "";
+      html += '<div class="popup-card">';
+      html +=
+        '<img src="' +
+        photo +
+        '" alt="' +
+        loc.name +
+        '" class="popup-card-photo" />';
+      html += '<div class="popup-card-body">';
+      html += '<div class="popup-icon-wrapper">' + starsHtml + "</div>";
+      html += '<div class="popup-title">' + loc.name + "</div>";
+      html += '<div class="popup-subtitle">' + subtitle + "</div>";
+      html += "</div>";
+      html += "</div>";
 
-            <div class="popup-icon-wrapper">
-              ${starsHtml}
-            </div>
-
-            <div class="popup-title">${loc.name}</div>
-            <div class="popup-subtitle">${subtitle}</div>
-
-          </div>
-        </div>
-      `;
+      return html;
     }
 
     // Scroll sidebar to a given POI id (only the sidebar scrolls)
     function scrollToPoi(id) {
       const list = document.getElementById("poi-list");
-      const item = list.querySelector(`.poi-item[data-id="${id}"]`);
-      if (!list || !item) return;
+      if (!list) return;
+
+      const item = list.querySelector('.poi-item[data-id="' + id + '"]');
+      if (!item) return;
 
       const listRect = list.getBoundingClientRect();
       const itemRect = item.getBoundingClientRect();
@@ -535,80 +636,149 @@
       });
     }
 
+    function setActivePoi(id) {
+      const activeId = id != null ? String(id) : null;
+
+      // Highlight sidebar
+      const items = document.querySelectorAll(".poi-item");
+      for (let i = 0; i < items.length; i++) {
+        if (activeId && items[i].dataset.id === activeId) {
+          items[i].classList.add("active");
+        } else {
+          items[i].classList.remove("active");
+        }
+      }
+
+      // Swap marker icons
+      for (const markerId in markersById) {
+        const marker = markersById[markerId];
+        if (activeId && markerId === activeId) {
+          marker.setIcon(selectedIcon);      // red pin
+          marker.setZIndexOffset(1000);
+        } else {
+          marker.setIcon(marker._defaultIcon); // ⭐ restore star-based icon
+          marker.setZIndexOffset(0);
+        }
+      }
+    }
+
     function initLocations(locs) {
       // sort by stars (desc) then name (asc)
-      locations = (locs || []).slice().sort((a, b) => {
-        const sa = Number(a.stars) || 0;
-        const sb = Number(b.stars) || 0;
+      locations = (locs || []).slice().sort(function (a, b) {
+        var sa = Number(a.stars) || 0;
+        var sb = Number(b.stars) || 0;
         if (sa !== sb) return sb - sa;
-        const na = (a.name || "").toLowerCase();
-        const nb = (b.name || "").toLowerCase();
+        var na = (a.name || "").toLowerCase();
+        var nb = (b.name || "").toLowerCase();
         return na.localeCompare(nb);
       });
 
-      const poiListEl = document.getElementById("poi-list");
+      var poiListEl = document.getElementById("poi-list");
       poiListEl.innerHTML = "";
 
-      locations.forEach((loc) => {
-        const popupHtml = buildPopupHtml(loc);
+      locations.forEach(function (loc) {
+        var popupHtml = buildPopupHtml(loc);
 
-        const marker = L.marker(loc.coords, { icon: seattleFlagIcon })
+        // ⭐ choose base icon from stars
+        var starCount = Number(loc.stars) || 0;
+        var baseIcon = seattleFlagIcon; // fallback
+
+        if (starCount === 1) {
+          baseIcon = pinOne;
+        } else if (starCount === 2) {
+          baseIcon = pinTwo;
+        } else if (starCount >= 3) {
+          baseIcon = pinThree;
+        }
+
+        // marker with star-based icon
+        var marker = L.marker(loc.coords, { icon: baseIcon })
           .addTo(map)
           .bindPopup(popupHtml);
 
+        // remember its default icon so we can restore it later
+        marker._defaultIcon = baseIcon;
         markersById[loc.id] = marker;
 
-        // when marker is clicked: highlight + scroll to sidebar item
-        marker.on("click", () => {
+        // Marker click → select + scroll sidebar
+        marker.on("click", function () {
           setActivePoi(loc.id);
           scrollToPoi(loc.id);
         });
 
+        // When popup opens, clicking the card closes popup (popupclose resets icons)
+        marker.on("popupopen", function (e) {
+          var popupRoot = e.popup.getElement();
+          if (!popupRoot) return;
+          var card = popupRoot.querySelector(".popup-card");
+          if (!card) return;
+          card.addEventListener(
+            "click",
+            function () {
+              marker.closePopup();
+            },
+            { once: true }
+          );
+        });
+
         // Sidebar item
-        const li = document.createElement("li");
+        var li = document.createElement("li");
         li.className = "poi-item";
         li.dataset.id = loc.id;
 
-        const photo =
+        var photo =
           loc.photo ||
           "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=800&q=80";
 
-        const icon2Url =
+        var icon2Url =
           loc.icon || "http://papaya.party/img/sea-star-big.png";
 
-        const stars = Number(loc.stars) || 0;
-        let sidebarStarsHtml = "";
-        for (let i = 0; i < stars; i++) {
-          sidebarStarsHtml += `
-            <div
-              class="poi-star-icon"
-              style="background-image:url('${icon2Url}')"
-            ></div>`;
+        var stars = starCount;
+        var sidebarStarsHtml = "";
+        for (var i = 0; i < stars; i++) {
+          sidebarStarsHtml +=
+            '<div class="poi-star-icon" style="background-image:url(\'' +
+            icon2Url +
+            '\')"></div>';
         }
 
-        li.innerHTML = `
-          <img src="${photo}" alt="${loc.name}" class="poi-photo" />
-          <div class="poi-body">
-            <div class="poi-stars">
-              ${sidebarStarsHtml}
-            </div>
-            <div class="poi-title">${loc.name}</div>
-            <div class="poi-subtitle">${loc.subtitle || ""}</div>
-            <div class="poi-desc">${loc.description || ""}</div>
-          </div>
-        `;
+        var liHtml = "";
+        liHtml +=
+          '<img src="' +
+          photo +
+          '" alt="' +
+          loc.name +
+          '" class="poi-photo" />';
+        liHtml += '<div class="poi-body">';
+        liHtml += '<div class="poi-stars">' + sidebarStarsHtml + "</div>";
+        liHtml += '<div class="poi-title">' + loc.name + "</div>";
+        liHtml +=
+          '<div class="poi-subtitle">' + (loc.subtitle || "") + "</div>";
+        liHtml +=
+          '<div class="poi-desc">' + (loc.description || "") + "</div>";
+        liHtml += "</div>";
 
-        li.addEventListener("click", () => {
+        li.innerHTML = liHtml;
+
+        li.addEventListener("click", function () {
           map.setView(loc.coords, 15, { animate: true });
           marker.openPopup();
           setActivePoi(loc.id);
+
+          // On mobile: switch to map view
+          if (isMobile()) {
+            document.body.classList.add("show-map");
+            setTimeout(function () {
+              map.invalidateSize();
+            }, 250);
+          }
         });
 
         poiListEl.appendChild(li);
       });
 
       if (locations.length > 0) {
-        const first = locations[0];
+        var first = locations[0];
         map.setView(first.coords, 14);
         if (markersById[first.id]) {
           markersById[first.id].openPopup();
@@ -617,11 +787,10 @@
       }
     }
 
-    function setActivePoi(id) {
-      document.querySelectorAll(".poi-item").forEach((item) => {
-        item.classList.toggle("active", item.dataset.id === id);
-      });
-    }
+    // Any time ANY popup closes (X or map click), clear selection
+    map.on("popupclose", function () {
+      setActivePoi(null);
+    });
 
     async function loadLocations() {
       const poiListEl = document.getElementById("poi-list");
@@ -631,19 +800,18 @@
           throw new Error("Failed to fetch locations.json");
         }
         const data = await response.json();
-        const locs = Array.isArray(data) ? data : (data.locations || []);
+        const locs = Array.isArray(data) ? data : data.locations || [];
         initLocations(locs);
       } catch (err) {
         console.error(err);
-        poiListEl.innerHTML = `
-          <li class="poi-item">
-            <div class="poi-title">Couldn’t load locations</div>
-            <div class="poi-desc">
-              Check that <code>locations.json</code> is in the same folder,
-              valid JSON, and you’re running a local server.
-            </div>
-          </li>
-        `;
+        poiListEl.innerHTML =
+          '<li class="poi-item">' +
+          '<div class="poi-title">Couldn’t load locations</div>' +
+          '<div class="poi-desc">' +
+          'Check that <code>locations.json</code> is in the same folder, ' +
+          "valid JSON, and you’re running a local server." +
+          "</div>" +
+          "</li>";
       }
     }
 
