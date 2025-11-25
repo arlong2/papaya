@@ -239,6 +239,66 @@
       margin-top: 3px;
     }
 
+    /* Search wrapper */
+    #search-wrapper {
+      position: relative;
+      width: calc(100% - 14px);
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    /* Search input */
+    #search-input {
+      width: 100%;
+      padding: 6px 32px 6px 12px;
+      border-radius: 8px;
+      border: 2px solid var(--card-border);
+      background: var(--card-bg);
+      color: var(--text-main);
+      font-size: 13px;
+      font-family: inherit;
+      transition: border-color 0.2s ease;
+    }
+
+    #search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    #search-input::placeholder {
+      color: var(--text-softer);
+    }
+
+    /* Search clear button */
+    #search-clear {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      border-radius: 4px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    #search-clear:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--text-main);
+    }
+
+    #search-clear.visible {
+      display: flex;
+    }
+
     /* Filter buttons */
     #filter-buttons {
       display: flex;
@@ -494,6 +554,10 @@
 
   <div class="app-shell">
     <div id="sidebar">
+      <div id="search-wrapper">
+        <input type="text" id="search-input" placeholder="Search restaurants..." />
+        <button id="search-clear" type="button">×</button>
+      </div>
       <div id="filter-buttons">
         <button class="filter-btn active" data-stars="all">All</button>
         <button class="filter-btn" data-stars="1">1-Star</button>
@@ -585,6 +649,7 @@
     const markersById = {};
     let locations = [];
     let currentFilter = 'all';
+    let searchQuery = '';
 
     function buildPopupHtml(loc) {
       const photo =
@@ -669,13 +734,32 @@
       }
     }
 
+    function fuzzyMatch(text, query) {
+      if (!query) return true;
+      text = text.toLowerCase();
+      query = query.toLowerCase();
+      
+      var textIndex = 0;
+      for (var i = 0; i < query.length; i++) {
+        textIndex = text.indexOf(query[i], textIndex);
+        if (textIndex === -1) return false;
+        textIndex++;
+      }
+      return true;
+    }
+
     function filterLocations() {
       var poiListEl = document.getElementById("poi-list");
       var items = poiListEl.querySelectorAll('.poi-item');
       
       items.forEach(function(item) {
         var stars = item.dataset.stars;
-        if (currentFilter === 'all' || stars === currentFilter) {
+        var name = item.dataset.name || '';
+        
+        var matchesFilter = currentFilter === 'all' || stars === currentFilter;
+        var matchesSearch = fuzzyMatch(name, searchQuery);
+        
+        if (matchesFilter && matchesSearch) {
           item.style.display = '';
         } else {
           item.style.display = 'none';
@@ -688,7 +772,10 @@
         var loc = locations.find(function(l) { return String(l.id) === id; });
         if (loc) {
           var stars = String(Number(loc.stars) || 0);
-          if (currentFilter === 'all' || stars === currentFilter) {
+          var matchesFilter = currentFilter === 'all' || stars === currentFilter;
+          var matchesSearch = fuzzyMatch(loc.name || '', searchQuery);
+          
+          if (matchesFilter && matchesSearch) {
             marker.setOpacity(1);
           } else {
             marker.setOpacity(0.2);
@@ -754,6 +841,8 @@
         li.className = "poi-item";
         li.dataset.id = loc.id;
         li.dataset.stars = String(starCount);
+        li.dataset.name = loc.name || '';
+        li.dataset.subtitle = loc.subtitle || '';
 
         var photo =
           loc.photo ||
@@ -872,6 +961,31 @@
         currentFilter = btn.dataset.stars;
         filterLocations();
       });
+    });
+
+    // Search input handler
+    var searchInput = document.getElementById('search-input');
+    var searchClear = document.getElementById('search-clear');
+    
+    searchInput.addEventListener('input', function() {
+      searchQuery = this.value;
+      filterLocations();
+      
+      // Show/hide clear button
+      if (searchQuery) {
+        searchClear.classList.add('visible');
+      } else {
+        searchClear.classList.remove('visible');
+      }
+    });
+
+    // Clear button handler
+    searchClear.addEventListener('click', function() {
+      searchInput.value = '';
+      searchQuery = '';
+      filterLocations();
+      searchClear.classList.remove('visible');
+      searchInput.focus();
     });
   </script>
 </body>
