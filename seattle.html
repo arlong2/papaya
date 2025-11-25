@@ -779,8 +779,14 @@
         li.innerHTML = liHtml;
 
         li.addEventListener("click", function () {
+          // Center the map on the pin
           map.setView(loc.coords, 15, { animate: true });
-          marker.openPopup();
+          
+          // Open popup after a short delay to ensure map has centered
+          setTimeout(function() {
+            marker.openPopup();
+          }, 300);
+          
           setActivePoi(loc.id);
 
           if (isMobile()) {
