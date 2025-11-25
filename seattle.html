@@ -102,12 +102,30 @@
       text-transform: uppercase;
     }
 
-    #top-nav .nav-edition {
+    #top-nav .nav-about {
+      font-size: 13px;
+      color: var(--text-main);
+      font-weight: 500;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: background 0.2s ease;
+    }
+
+    #top-nav .nav-about:first-of-type {
       margin-left: auto;
+    }
+
+    #top-nav .nav-about:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    #top-nav .nav-edition {
       font-size: 11px;
       color: var(--text-softer);
       letter-spacing: 0.13em;
       text-transform: uppercase;
+      margin-left: 16px;
     }
 
 
@@ -558,6 +576,8 @@
       <div class="nav-title">Seattle Restaurant Guide</div>
       <div class="nav-subtitle">Support local · follow the knot</div>
     </div>
+    <a href="seattle.html" class="nav-about">Guide</a>
+    <a href="about.html" class="nav-about">About</a>
     <div class="nav-edition">Winter 2025 edition</div>
   </div>
 
@@ -949,13 +969,10 @@
       } catch (err) {
         console.error(err);
         poiListEl.innerHTML =
-          '<li class="poi-item">' +
-          '<div class="poi-title">Couldn’t load locations</div>' +
+          '<div class="poi-title">Finalizing the winter 2025 guide</div>' +
           '<div class="poi-desc">' +
-          'Check that <code>locations.json</code> is in the same folder, ' +
-          "valid JSON, and you’re running a local server." +
-          "</div>" +
-          "</li>";
+          "Check back soon." +
+          "</div>";
       }
     }
 
