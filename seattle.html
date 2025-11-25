@@ -122,9 +122,9 @@
     /* SIDEBAR */
     #sidebar {
       width: 33.333%;
-      min-width: 260px;
+      min-width: 450px;
       max-width: 480px;
-      padding: 18px 18px 16px;
+      padding: 18px 18px 0;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -137,7 +137,7 @@
       list-style: none;
       padding: 0;
       margin: 0;
-      overflow-y: auto;
+      overflow-y: scroll;
       overflow-x: hidden;
       flex: 1;
 
@@ -155,11 +155,7 @@
       background: transparent;
     }
     #poi-list::-webkit-scrollbar-thumb {
-      background: linear-gradient(
-        180deg,
-        var(--accent-light),
-        var(--accent-dark)
-      );
+      background: var(--accent);
       border-radius: 999px;
     }
 
@@ -208,8 +204,8 @@
     }
 
     .poi-star-icon {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       border-radius: 999px;
       background-size: cover;
       background-position: center;
@@ -249,11 +245,12 @@
       gap: 8px;
       margin-bottom: 8px;
       flex-shrink: 0;
+      padding-right: 14px;
     }
 
     .filter-btn {
       flex: 1;
-      padding: 8px 12px;
+      padding: 6px 12px;
       border-radius: 8px;
       border: 2px solid var(--card-border);
       background: var(--card-bg);
@@ -343,9 +340,21 @@
     }
 
     .leaflet-popup-close-button {
-      color: #0f172a !important;
-      padding-top: 6px;
-      padding-right: 10px;
+      color: #ffffff !important;
+      font-size: 24px !important;
+      font-weight: 700 !important;
+      padding: 8px 12px !important;
+      top: 8px !important;
+      right: 8px !important;
+      width: auto !important;
+      height: auto !important;
+      line-height: 1 !important;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+    
+    .leaflet-popup-close-button:hover {
+      color: #ffffff !important;
+      opacity: 0.8;
     }
 
     .popup-card {
@@ -381,8 +390,8 @@
     }
 
     .popup-small-icon {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       border-radius: 999px;
       background-size: cover;
       background-position: center;
@@ -420,6 +429,8 @@
 
       #sidebar {
         width: 100%;
+        min-width: 100%;
+        max-width: 100%;
         height: 100%;
         border-right: none;
         border-bottom: none;
@@ -502,10 +513,10 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // City bounds
+    // City bounds (expanded to include Kirkland)
     const seattleBounds = [
       [47.495, -122.435],
-      [47.735, -122.235]
+      [47.735, -122.19]
     ];
 
     const map = L.map("map-inner", {
@@ -778,24 +789,37 @@
 
         li.innerHTML = liHtml;
 
-        li.addEventListener("click", function () {
-          // Center the map on the pin
-          map.setView(loc.coords, 15, { animate: true });
-          
-          // Open popup after a short delay to ensure map has centered
-          setTimeout(function() {
-            marker.openPopup();
-          }, 300);
-          
-          setActivePoi(loc.id);
-
-          if (isMobile()) {
-            document.body.classList.add("show-map");
-            setTimeout(function () {
-              map.invalidateSize();
-            }, 250);
-          }
-        });
+        (function(location, markerRef) {
+          li.addEventListener("click", function () {
+            if (isMobile()) {
+              document.body.classList.add("show-map");
+              setTimeout(function () {
+                map.invalidateSize();
+                // Center the map after invalidating size on mobile
+                map.setView(location.coords, 15, { animate: true });
+                setTimeout(function() {
+                  markerRef.openPopup();
+                  // Set active after popup opens to avoid race condition
+                  setTimeout(function() {
+                    setActivePoi(location.id);
+                  }, 50);
+                }, 300);
+              }, 300);
+            } else {
+              // Center the map on the pin
+              map.setView(location.coords, 15, { animate: true });
+              
+              // Open popup after a short delay
+              setTimeout(function() {
+                markerRef.openPopup();
+                // Set active after popup opens to avoid popupclose clearing it
+                setTimeout(function() {
+                  setActivePoi(location.id);
+                }, 50);
+              }, 300);
+            }
+          });
+        })(loc, marker);
 
         poiListEl.appendChild(li);
       });
