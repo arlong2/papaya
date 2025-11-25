@@ -21,10 +21,10 @@
 
   <style>
     :root {
-      /* Palette based on sea-star-big (teal) */
-      --accent: #57a3b1;
+      /* Palette based on sea-star-big (teal) 57, 128, 150 */
+      --accent: rgba(57, 128, 150, 1);
       --accent-light: #8fcad3;
-      --accent-dark: #2b6d78;
+      --accent-dark: rgba(57, 128, 150, 1);;
 
       --page-bg: #f4f5f7;
       --card-bg: #ffffff;
@@ -243,6 +243,37 @@
       margin-top: 3px;
     }
 
+    /* Filter buttons */
+    #filter-buttons {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    .filter-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 2px solid var(--card-border);
+      background: var(--card-bg);
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--accent-light);
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
     /* MAP */
     #map {
       flex: 1;
@@ -452,6 +483,12 @@
 
   <div class="app-shell">
     <div id="sidebar">
+      <div id="filter-buttons">
+        <button class="filter-btn active" data-stars="all">All</button>
+        <button class="filter-btn" data-stars="1">1-Star</button>
+        <button class="filter-btn" data-stars="2">2-Star</button>
+        <button class="filter-btn" data-stars="3">3-Star</button>
+      </div>
       <ul id="poi-list"></ul>
     </div>
 
@@ -536,6 +573,7 @@
 
     const markersById = {};
     let locations = [];
+    let currentFilter = 'all';
 
     function buildPopupHtml(loc) {
       const photo =
@@ -620,6 +658,34 @@
       }
     }
 
+    function filterLocations() {
+      var poiListEl = document.getElementById("poi-list");
+      var items = poiListEl.querySelectorAll('.poi-item');
+      
+      items.forEach(function(item) {
+        var stars = item.dataset.stars;
+        if (currentFilter === 'all' || stars === currentFilter) {
+          item.style.display = '';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+
+      // Update map markers visibility
+      for (var id in markersById) {
+        var marker = markersById[id];
+        var loc = locations.find(function(l) { return String(l.id) === id; });
+        if (loc) {
+          var stars = String(Number(loc.stars) || 0);
+          if (currentFilter === 'all' || stars === currentFilter) {
+            marker.setOpacity(1);
+          } else {
+            marker.setOpacity(0.2);
+          }
+        }
+      }
+    }
+
     function initLocations(locs) {
       locations = (locs || []).slice().sort(function (a, b) {
         var sa = Number(a.stars) || 0;
@@ -676,6 +742,7 @@
         var li = document.createElement("li");
         li.className = "poi-item";
         li.dataset.id = loc.id;
+        li.dataset.stars = String(starCount);
 
         var photo =
           loc.photo ||
@@ -765,6 +832,17 @@
     }
 
     loadLocations();
+
+    // Filter button handlers
+    var filterButtons = document.querySelectorAll('.filter-btn');
+    filterButtons.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        filterButtons.forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentFilter = btn.dataset.stars;
+        filterLocations();
+      });
+    });
   </script>
 </body>
 </html>
