@@ -22,9 +22,9 @@
   <style>
     :root {
       /* Palette based on sea-star-big (teal) 57, 128, 150 */
-      --accent: rgba(57, 128, 150, 1);
+      --accent: rgba(69, 134, 153, 1);
       --accent-light: #8fcad3;
-      --accent-dark: rgba(57, 128, 150, 1);;
+      --accent-dark: rgba(69, 134, 153, 1);;
 
       --page-bg: #f4f5f7;
       --card-bg: #ffffff;
@@ -33,10 +33,18 @@
       --text-main: #111827;
       --text-muted: #6b7280;
       --text-softer: #9ca3af;
+
+      --tomato-jam: rgba(204, 41, 54);
+      --willow-green: rgba(134, 205, 130);
+      --jet-black: rgba(0, 42, 50);
     }
 
     * {
       box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
     }
 
     html,
@@ -125,7 +133,7 @@
       color: var(--text-softer);
       letter-spacing: 0.13em;
       text-transform: uppercase;
-      margin-left: 16px;
+      margin-left: 12px;
     }
 
 
@@ -227,6 +235,34 @@
       display: flex;
       gap: 4px;
       margin-bottom: 6px;
+      align-items: center;
+    }
+
+    .poi-type-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-light);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-right: 6px;
+      height: 20px;
+      line-height: 16px;
+    }
+
+    .poi-type-badge.restaurant {
+      background: var(--tomato-jam);
+    }
+
+    .poi-type-badge.bar {
+      background: var(--jet-black);
+    }
+
+    .poi-type-badge.shop {
+      background: var(--willow-green);
     }
 
     .poi-star-icon {
@@ -269,7 +305,6 @@
     #search-wrapper {
       position: relative;
       width: calc(100% - 14px);
-      margin-bottom: 10px;
       flex-shrink: 0;
     }
 
@@ -325,11 +360,109 @@
       display: flex;
     }
 
-    /* Filter buttons */
+    /* Filters section */
+    #filters-section {
+      flex-shrink: 0;
+      margin-bottom: 12px;
+      transition: margin-bottom 0.25s ease-out;
+    }
+
+    #filters-section.collapsed {
+      margin-bottom: 12px;
+    }
+
+    #filters-section.collapsed {
+      flex-shrink: 0;
+      margin-bottom: -4px;
+    }
+
+    #filters-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      cursor: pointer;
+      user-select: none;
+      width: calc(100% - 14px);
+      margin-bottom: 4px;
+    }
+
+    #filters-header:hover {
+      background: rgba(0, 0, 0, 0.02);
+      border-radius: 6px;
+    }
+
+    #filters-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-left: 6px;
+    }
+
+    #filters-toggle {
+      font-size: 20px;
+      color: var(--text-main);
+      transition: transform 0.2s ease;
+      line-height: 1;
+      transform: rotate(90deg);
+      margin-right: 6px;
+    }
+
+    #filters-toggle.collapsed {
+      transform: rotate(0deg);
+    }
+
+
+
+    #filters-content {
+      overflow: hidden;
+      max-height: 120px;
+      padding-top: 4px;
+      transition: max-height 0.25s ease-out, padding 0.25s ease-out;
+    }
+
+    #filters-content.collapsed {
+      max-height: 0;
+      padding-top: 0;
+    }
+
+    #filters-content.expanded {
+      max-height: 120px;
+      padding-top: 4px;
+    }
+
+    .filter-group {
+      margin-bottom: 8px;
+    }
+    
+    .filter-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .filter-group-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* Type filter buttons */
+    #type-filter-buttons {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+      padding-right: 14px;
+    }
+
+    /* Star filter buttons */
     #filter-buttons {
       display: flex;
       gap: 8px;
-      margin-bottom: 8px;
       flex-shrink: 0;
       padding-right: 14px;
     }
@@ -345,6 +478,22 @@
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .filter-stars {
+      display: flex;
+      gap: 2px;
+      align-items: center;
+    }
+
+    .filter-star-icon {
+      width: 14px;
+      height: 14px;
+      display: inline-block;
     }
 
     .filter-btn:hover {
@@ -355,6 +504,25 @@
       background: var(--accent);
       border-color: var(--accent);
       color: #ffffff;
+    }
+
+    .filter-btn.active .filter-star-icon {
+      content: url("http://papaya.party/img/sea-star-big-clear-full.png");
+    }
+
+    .filter-btn[data-type="restaurant"].active {
+      background: var(--tomato-jam);
+      border-color: var(--tomato-jam);
+    }
+
+    .filter-btn[data-type="bar"].active {
+      background: var(--jet-black);
+      border-color: var(--jet-black);
+    }
+
+    .filter-btn[data-type="shop"].active {
+      background: var(--willow-green);
+      border-color: var(--willow-green);
     }
 
     /* MAP */
@@ -475,6 +643,33 @@
       margin-bottom: 8px;
     }
 
+    .popup-type-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-light);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-right: 6px;
+      height: 20px;
+      line-height: 16px;
+    }
+
+    .popup-type-badge.restaurant {
+      background: var(--tomato-jam);
+    }
+
+    .popup-type-badge.bar {
+      background: var(--jet-black);
+    }
+
+    .popup-type-badge.shop {
+      background: var(--willow-green);
+    }
+
     .popup-small-icon {
       width: 20px;
       height: 20px;
@@ -576,8 +771,9 @@
       <div class="nav-title">Seattle Restaurant Guide</div>
       <div class="nav-subtitle">Support local · follow the knot</div>
     </div>
-    <a href="seattle.html" class="nav-about">Guide</a>
     <a href="about.html" class="nav-about">About</a>
+    <a href="seattle.html" class="nav-about">Guide</a>
+    <a href="suggest.html" class="nav-about">Suggest</a>
     <div class="nav-edition">Winter 2025 edition</div>
   </div>
 
@@ -587,12 +783,36 @@
         <input type="text" id="search-input" placeholder="Search restaurants..." />
         <button id="search-clear" type="button">×</button>
       </div>
-      <div id="filter-buttons">
-        <button class="filter-btn active" data-stars="all">All</button>
-        <button class="filter-btn" data-stars="1">1-Star</button>
-        <button class="filter-btn" data-stars="2">2-Star</button>
-        <button class="filter-btn" data-stars="3">3-Star</button>
+      
+      <div id="filters-section">
+        <div id="filters-header">
+          <div id="filters-title">Filter</div>
+          <div id="filters-toggle">›</div>
+        </div>
+        <div id="filters-content" class="expanded">
+          <div class="filter-group">
+            <div id="type-filter-buttons">
+              <button class="filter-btn" data-type="restaurant">Restaurant</button>
+              <button class="filter-btn" data-type="bar">Bar</button>
+              <button class="filter-btn" data-type="shop">Shop</button>
+            </div>
+          </div>
+          <div class="filter-group">
+            <div id="filter-buttons">
+              <button class="filter-btn" data-stars="1">
+                <span class="filter-stars"><img src="http://papaya.party/img/sea-star-big.png" class="filter-star-icon" /></span> Notable
+              </button>
+              <button class="filter-btn" data-stars="2">
+                <span class="filter-stars"><img src="http://papaya.party/img/sea-star-big.png" class="filter-star-icon" /><img src="http://papaya.party/img/sea-star-big.png" class="filter-star-icon" /></span> Exceptional
+              </button>
+              <button class="filter-btn" data-stars="3">
+                <span class="filter-stars"><img src="http://papaya.party/img/sea-star-big.png" class="filter-star-icon" /><img src="http://papaya.party/img/sea-star-big.png" class="filter-star-icon" /><img src="http://papaya.party/img/sea-star-big.png" class="filter-star-icon" /></span> Iconic
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
+      
       <ul id="poi-list"></ul>
     </div>
 
@@ -677,8 +897,10 @@
 
     const markersById = {};
     let locations = [];
-    let currentFilter = 'all';
+    let selectedStars = new Set();
+    let selectedTypes = new Set();
     let searchQuery = '';
+    let currentActiveId = null;
 
     function buildPopupHtml(loc) {
       const photo =
@@ -690,6 +912,7 @@
 
       const subtitle = loc.subtitle || "";
       const stars = Number(loc.stars) || 0;
+      const type = loc.type || "restaurant";
 
       let starsHtml = "";
       for (let i = 0; i < stars; i++) {
@@ -708,7 +931,10 @@
         loc.name +
         '" class="popup-card-photo" />';
       html += '<div class="popup-card-body">';
-      html += '<div class="popup-icon-wrapper">' + starsHtml + "</div>";
+      html += '<div class="popup-icon-wrapper">';
+      html += '<span class="popup-type-badge ' + type + '">' + type + '</span>';
+      html += starsHtml;
+      html += "</div>";
       html += '<div class="popup-title">' + loc.name + "</div>";
       html += '<div class="popup-subtitle">' + subtitle + "</div>";
       html += "</div>";
@@ -741,6 +967,7 @@
 
     function setActivePoi(id) {
       const activeId = id != null ? String(id) : null;
+      currentActiveId = activeId;
 
       const items = document.querySelectorAll(".poi-item");
       for (let i = 0; i < items.length; i++) {
@@ -780,36 +1007,61 @@
     function filterLocations() {
       var poiListEl = document.getElementById("poi-list");
       var items = poiListEl.querySelectorAll('.poi-item');
+      var activeItemFiltered = false;
       
       items.forEach(function(item) {
         var stars = item.dataset.stars;
+        var type = item.dataset.type || 'restaurant';
         var name = item.dataset.name || '';
         
-        var matchesFilter = currentFilter === 'all' || stars === currentFilter;
+        // If no filters selected, show all
+        var matchesStarFilter = selectedStars.size === 0 || selectedStars.has(stars);
+        var matchesTypeFilter = selectedTypes.size === 0 || selectedTypes.has(type);
         var matchesSearch = fuzzyMatch(name, searchQuery);
         
-        if (matchesFilter && matchesSearch) {
+        if (matchesStarFilter && matchesTypeFilter && matchesSearch) {
           item.style.display = '';
         } else {
           item.style.display = 'none';
+          // Check if the currently active item is being filtered out
+          if (currentActiveId && item.dataset.id === currentActiveId) {
+            activeItemFiltered = true;
+          }
         }
       });
 
-      // Update map markers visibility
+      // Update map markers visibility with fade
       for (var id in markersById) {
         var marker = markersById[id];
         var loc = locations.find(function(l) { return String(l.id) === id; });
         if (loc) {
           var stars = String(Number(loc.stars) || 0);
-          var matchesFilter = currentFilter === 'all' || stars === currentFilter;
+          var type = loc.type || 'restaurant';
+          
+          // If no filters selected, show all
+          var matchesStarFilter = selectedStars.size === 0 || selectedStars.has(stars);
+          var matchesTypeFilter = selectedTypes.size === 0 || selectedTypes.has(type);
           var matchesSearch = fuzzyMatch(loc.name || '', searchQuery);
           
-          if (matchesFilter && matchesSearch) {
-            marker.setOpacity(1);
-          } else {
-            marker.setOpacity(0.2);
+          var icon = marker.getElement();
+          if (icon) {
+            if (matchesStarFilter && matchesTypeFilter && matchesSearch) {
+              // Fade in and enable interactions
+              icon.style.opacity = '1';
+              icon.style.pointerEvents = 'auto';
+            } else {
+              // Fade out and disable interactions
+              icon.style.opacity = '0';
+              icon.style.pointerEvents = 'none';
+            }
           }
         }
+      }
+      
+      // Only clear selection if the active item was filtered out
+      if (activeItemFiltered) {
+        setActivePoi(null);
+        map.closePopup();
       }
     }
 
@@ -840,12 +1092,21 @@
           baseIcon = pinThree;
         }
 
-        var marker = L.marker(loc.coords, { icon: baseIcon })
+        var marker = L.marker(loc.coords, { 
+          icon: baseIcon,
+          opacity: 1
+        })
           .addTo(map)
           .bindPopup(popupHtml);
 
         marker._defaultIcon = baseIcon;
         markersById[loc.id] = marker;
+        
+        // Add CSS transition to marker icon
+        var icon = marker.getElement();
+        if (icon) {
+          icon.style.transition = 'opacity 0.2s ease';
+        }
 
         marker.on("click", function () {
           setActivePoi(loc.id);
@@ -870,6 +1131,7 @@
         li.className = "poi-item";
         li.dataset.id = loc.id;
         li.dataset.stars = String(starCount);
+        li.dataset.type = loc.type || 'restaurant';
         li.dataset.name = loc.name || '';
         li.dataset.subtitle = loc.subtitle || '';
 
@@ -881,6 +1143,7 @@
           loc.icon || "http://papaya.party/img/sea-star-big.png";
 
         var stars = starCount;
+        var type = loc.type || 'restaurant';
         var sidebarStarsHtml = "";
         for (var i = 0; i < stars; i++) {
           sidebarStarsHtml +=
@@ -897,7 +1160,10 @@
           loc.name +
           '" class="poi-photo" />';
         liHtml += '<div class="poi-body">';
-        liHtml += '<div class="poi-stars">' + sidebarStarsHtml + "</div>";
+        liHtml += '<div class="poi-stars">';
+        liHtml += '<span class="poi-type-badge ' + type + '">' + type + '</span>';
+        liHtml += sidebarStarsHtml;
+        liHtml += '</div>';
         liHtml += '<div class="poi-title">' + loc.name + "</div>";
         liHtml +=
           '<div class="poi-subtitle">' + (loc.subtitle || "") + "</div>";
@@ -978,13 +1244,38 @@
 
     loadLocations();
 
-    // Filter button handlers
-    var filterButtons = document.querySelectorAll('.filter-btn');
-    filterButtons.forEach(function(btn) {
+    // Type filter button handlers (multi-select)
+    var typeFilterButtons = document.querySelectorAll('#type-filter-buttons .filter-btn');
+    typeFilterButtons.forEach(function(btn) {
       btn.addEventListener('click', function() {
-        filterButtons.forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        currentFilter = btn.dataset.stars;
+        var type = btn.dataset.type;
+        
+        if (selectedTypes.has(type)) {
+          selectedTypes.delete(type);
+          btn.classList.remove('active');
+        } else {
+          selectedTypes.add(type);
+          btn.classList.add('active');
+        }
+        
+        filterLocations();
+      });
+    });
+
+    // Star filter button handlers (multi-select)
+    var starFilterButtons = document.querySelectorAll('#filter-buttons .filter-btn');
+    starFilterButtons.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var stars = btn.dataset.stars;
+        
+        if (selectedStars.has(stars)) {
+          selectedStars.delete(stars);
+          btn.classList.remove('active');
+        } else {
+          selectedStars.add(stars);
+          btn.classList.add('active');
+        }
+        
         filterLocations();
       });
     });
@@ -1012,6 +1303,26 @@
       filterLocations();
       searchClear.classList.remove('visible');
       searchInput.focus();
+    });
+
+    // Filters collapse/expand handler
+    var filtersHeader = document.getElementById('filters-header');
+    var filtersSection = document.getElementById('filters-section');
+    var filtersContent = document.getElementById('filters-content');
+    var filtersToggle = document.getElementById('filters-toggle');
+    
+    filtersHeader.addEventListener('click', function() {
+      if (filtersContent.classList.contains('expanded')) {
+        filtersContent.classList.remove('expanded');
+        filtersContent.classList.add('collapsed');
+        filtersSection.classList.add('collapsed');
+        filtersToggle.classList.add('collapsed');
+      } else {
+        filtersContent.classList.remove('collapsed');
+        filtersContent.classList.add('expanded');
+        filtersSection.classList.remove('collapsed');
+        filtersToggle.classList.remove('collapsed');
+      }
     });
   </script>
 </body>
