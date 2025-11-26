@@ -506,10 +506,6 @@
       color: #ffffff;
     }
 
-    .filter-btn.active .filter-star-icon {
-      content: url("http://papaya.party/img/sea-star-big-clear-full.png");
-    }
-
     .filter-btn[data-type="restaurant"].active {
       background: var(--tomato-jam);
       border-color: var(--tomato-jam);
@@ -1267,13 +1263,22 @@
     starFilterButtons.forEach(function(btn) {
       btn.addEventListener('click', function() {
         var stars = btn.dataset.stars;
+        var starIcons = btn.querySelectorAll('.filter-star-icon');
         
         if (selectedStars.has(stars)) {
           selectedStars.delete(stars);
           btn.classList.remove('active');
+          // Change back to filled stars
+          starIcons.forEach(function(icon) {
+            icon.src = 'http://papaya.party/img/sea-star-big.png';
+          });
         } else {
           selectedStars.add(stars);
           btn.classList.add('active');
+          // Change to clear stars
+          starIcons.forEach(function(icon) {
+            icon.src = 'http://papaya.party/img/sea-star-big-clear-full.png';
+          });
         }
         
         filterLocations();
