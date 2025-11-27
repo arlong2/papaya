@@ -557,6 +557,29 @@
       background: #e5e7eb;
     }
 
+    /* Annotation (pin) hover effect - target all possible MapKit annotation elements */
+    .mk-annotation-container,
+    .mk-annotation-view,
+    [class*="annotation"] img,
+    img[src*="sea-pin"] {
+      cursor: pointer !important;
+      transition: transform 0.2s ease, filter 0.2s ease !important;
+    }
+
+    .mk-annotation-container:hover,
+    .mk-annotation-view:hover,
+    [class*="annotation"]:hover img,
+    img[src*="sea-pin"]:hover {
+      transform: scale(1.15) translateY(-3px) !important;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)) !important;
+    }
+
+    /* Also try targeting by data attributes */
+    [data-feature-type="annotation"]:hover {
+      transform: scale(1.15) translateY(-3px) !important;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)) !important;
+    }
+
     /* Zoom controls styling */
     .mk-map-view .mk-zoom-control {
       border-radius: 999px !important;
@@ -885,6 +908,7 @@
     let currentActiveId = null;
     let customPopup = null;
     let currentPopupAnnotation = null;
+    let hoverOverlays = {};
 
     function updatePopupPosition() {
       if (!customPopup || !currentPopupAnnotation) return;
@@ -1218,6 +1242,11 @@
           showCustomPopup(loc, annotation);
         });
 
+        // Create hover overlay for this annotation
+        setTimeout(function() {
+          createHoverOverlay(annotation, loc.id);
+        }, 100);
+
         var li = document.createElement("li");
         li.className = "poi-item";
         li.dataset.id = loc.id;
@@ -1312,6 +1341,81 @@
         }
         setActivePoi(first.id);
       }
+
+      // Add hover effects to all annotation images after they're rendered
+      setTimeout(function() {
+        addHoverEffectsToAnnotations();
+      }, 500);
+    }
+
+    function createHoverOverlay(annotation, annotationId) {
+      // Remove existing overlay if any
+      if (hoverOverlays[annotationId]) {
+        hoverOverlays[annotationId].remove();
+      }
+
+      var overlay = document.createElement('div');
+      overlay.style.cssText = `
+        position: absolute;
+        width: 40px;
+        height: 50px;
+        cursor: pointer;
+        z-index: 5000;
+        pointer-events: auto;
+      `;
+      
+      var mapElement = document.getElementById('map-inner');
+      mapElement.appendChild(overlay);
+      hoverOverlays[annotationId] = overlay;
+
+      // Position the overlay
+      function updateOverlayPosition() {
+        var mapRect = mapElement.getBoundingClientRect();
+        var pagePoint = map.convertCoordinateToPointOnPage(annotation.coordinate);
+        var mapX = pagePoint.x - mapRect.left;
+        var mapY = pagePoint.y - mapRect.top;
+        
+        overlay.style.left = (mapX - 20) + 'px';
+        overlay.style.top = (mapY - 45) + 'px';
+      }
+
+      updateOverlayPosition();
+
+      // Hover effects
+      var originalIcon = annotation.data.defaultIcon;
+      var isHovering = false;
+
+      overlay.addEventListener('mouseenter', function() {
+        isHovering = true;
+        // Scale effect by temporarily changing icon size
+        annotation.size = { width: 37, height: 52 };
+      });
+
+      overlay.addEventListener('mouseleave', function() {
+        isHovering = false;
+        annotation.size = { width: 32, height: 45 };
+      });
+
+      overlay.addEventListener('click', function() {
+        map.selectedAnnotation = annotation;
+      });
+
+      return { overlay: overlay, update: updateOverlayPosition };
+    }
+
+    function updateAllHoverOverlays() {
+      for (var id in hoverOverlays) {
+        if (markersById[id]) {
+          var mapElement = document.getElementById('map-inner');
+          var mapRect = mapElement.getBoundingClientRect();
+          var pagePoint = map.convertCoordinateToPointOnPage(markersById[id].coordinate);
+          var mapX = pagePoint.x - mapRect.left;
+          var mapY = pagePoint.y - mapRect.top;
+          
+          hoverOverlays[id].style.left = (mapX - 20) + 'px';
+          hoverOverlays[id].style.top = (mapY - 45) + 'px';
+        }
+      }
     }
 
     // Handle annotation deselection
@@ -1324,8 +1428,11 @@
     var isUpdating = false;
     
     function continuouslyUpdatePopup() {
-      if (isUpdating && customPopup && currentPopupAnnotation) {
-        updatePopupPosition();
+      if (isUpdating) {
+        if (customPopup && currentPopupAnnotation) {
+          updatePopupPosition();
+        }
+        updateAllHoverOverlays();
         requestAnimationFrame(continuouslyUpdatePopup);
       }
     }
@@ -1342,6 +1449,7 @@
       // Stop continuous updates and do final position update
       isUpdating = false;
       updatePopupPosition();
+      updateAllHoverOverlays();
     });
 
     async function loadLocations() {
