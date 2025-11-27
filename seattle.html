@@ -812,15 +812,15 @@
   </div>
 
   <script>
-    // Initialize MapKit JS with your token
-    const MAPKIT_TOKEN = "eyJraWQiOiJVS0NSUkZRUDNWIiwidHlwIjoiSldUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiI5TUpEODg2VTgzIiwiaWF0IjoxNzY0MjcxMDA5LCJleHAiOjE3NjQ5MjE1OTl9.be2LOT2FUlTLiVUTrCfnm4l_pIMWQB2K2hzvl0AvqRr1cVXG_9llrE5bHKFeFiWtP0kdxFzBpV1WV_ggVO7MkA"; // Replace with your actual token
+    // Determine which config file to use based on environment
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1' ||
+                        window.location.hostname === '';
+    const configFile = isLocalhost ? 'config-dev.json' : 'config-prod.json';
     
-    mapkit.init({
-      authorizationCallback: function(done) {
-        done(MAPKIT_TOKEN);
-      }
-    });
-
+    // Global variables
+    let map;
+    
     // City bounds (expanded to include Kirkland)
     const seattleBounds = {
       north: 47.735,
@@ -829,16 +829,33 @@
       west: -122.435
     };
 
-    const map = new mapkit.Map("map-inner", {
-      center: new mapkit.Coordinate(47.6062, -122.3321),
-      showsMapTypeControl: false,
-      showsZoomControl: true,
-      showsUserLocationControl: false,
-      showsCompass: mapkit.FeatureVisibility.Hidden
-    });
-    
-    // Set initial camera distance (zoom level equivalent)
-    map.cameraDistance = 10000; // Roughly equivalent to zoom 13
+    // Load config and initialize MapKit
+    async function initializeMapKit() {
+      try {
+        const response = await fetch(configFile);
+        if (!response.ok) {
+          throw new Error('Failed to load config file: ' + configFile);
+        }
+        const config = await response.json();
+        
+        // Initialize MapKit JS with token from config
+        mapkit.init({
+          authorizationCallback: function(done) {
+            done(config.mapkitToken);
+          }
+        });
+        
+        // Create map after MapKit is initialized
+        map = new mapkit.Map("map-inner", {
+          center: new mapkit.Coordinate(47.6062, -122.3321),
+          showsMapTypeControl: false,
+          showsZoomControl: true,
+          showsUserLocationControl: false,
+          showsCompass: mapkit.FeatureVisibility.Hidden
+        });
+        
+        // Set initial camera distance (zoom level equivalent)
+        map.cameraDistance = 10000; // Roughly equivalent to zoom 13
 
     function isMobile() {
       return window.matchMedia("(max-width: 768px)").matches;
@@ -1347,7 +1364,16 @@
       }
     }
 
-    loadLocations();
+        loadLocations();
+      } catch (err) {
+        console.error('Error initializing MapKit:', err);
+        document.getElementById('poi-list').innerHTML = 
+          '<div style="padding: 20px; color: #ef4444;">Error loading map. Please check console for details.</div>';
+      }
+    }
+
+    // Initialize MapKit when page loads
+    initializeMapKit();
 
     // Type filter button handlers (multi-select)
     var typeFilterButtons = document.querySelectorAll('#type-filter-buttons .filter-btn');
