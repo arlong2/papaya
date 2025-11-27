@@ -4,12 +4,8 @@
   <meta charset="UTF-8" />
   <title>The Seattle List</title>
 
-  <!-- Leaflet CSS -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    crossorigin=""
-  />
+  <!-- MapKit JS -->
+  <script src="https://cdn.apple-mapkit.com/mk/5.x.x/mapkit.js"></script>
 
   <!-- Michelin-style clean sans font -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -536,6 +532,7 @@
       position: relative;
       height: 100%;
       background: #e5e7eb;
+      overflow: hidden;
     }
 
     #map-tint {
@@ -544,6 +541,7 @@
       pointer-events: none;
       background: rgba(87, 163, 177, 0.08);
       mix-blend-mode: soft-light;
+      z-index: 1;
     }
 
     #map-inner {
@@ -551,68 +549,48 @@
       inset: 0;
       width: 100%;
       height: 100%;
+      overflow: hidden;
     }
 
-    .leaflet-container {
+    /* MapKit styles */
+    .mk-map-view {
       background: #e5e7eb;
     }
 
-    .leaflet-tile {
-      filter: saturate(1.05) brightness(1.02) contrast(1.03);
-    }
-
-    .leaflet-control-zoom {
-      border: 0px !important;
-    }
-
-    .leaflet-control-zoom a {
-      background: #ffffff !important;
+    /* Zoom controls styling */
+    .mk-map-view .mk-zoom-control {
       border-radius: 999px !important;
       border: 1px solid rgba(148, 163, 184, 0.9);
-      color: var(--text-main) !important;
-      margin-bottom: 4px;
       box-shadow: 0 5px 12px rgba(15, 23, 42, 0.18);
     }
 
-    .leaflet-control-zoom a:hover {
+    .mk-map-view .mk-zoom-control button {
+      background: #ffffff !important;
+      color: var(--text-main) !important;
+    }
+
+    .mk-map-view .mk-zoom-control button:hover {
       background: var(--accent) !important;
       color: #ffffff !important;
-      border-color: var(--accent-dark);
     }
 
-    .leaflet-touch .leaflet-bar a {
-      width: 30px;
-      height: 30px;
-      line-height: 24px !important;
+    /* Annotation callout styling */
+    .mk-annotation-callout {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
     }
 
-    .leaflet-popup-content-wrapper,
-    .leaflet-popup-tip {
-      background: transparent;
-      border: none;
-      box-shadow: none;
-    }
-
-    .leaflet-popup-content {
-      margin: 0;
-      padding: 0;
-    }
-
-    .leaflet-popup-close-button {
+    .mk-annotation-callout .mk-callout-close-button {
       color: #ffffff !important;
       font-size: 24px !important;
       font-weight: 700 !important;
       padding: 8px 12px !important;
-      top: 8px !important;
-      right: 8px !important;
-      width: auto !important;
-      height: auto !important;
-      line-height: 1 !important;
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     }
     
-    .leaflet-popup-close-button:hover {
-      color: #ffffff !important;
+    .mk-annotation-callout .mk-callout-close-button:hover {
       opacity: 0.8;
     }
 
@@ -709,7 +687,7 @@
     @media (max-width: 768px) {
       .popup-card-photo,
       .popup-description,
-      .leaflet-popup-close-button {
+      .mk-callout-close-button {
         display: none !important;
       }
 
@@ -766,7 +744,7 @@
         gap: 4px;
       }
 
-      .leaflet-control-zoom {
+      .mk-zoom-control {
         display: none !important;
       }
     }
@@ -833,27 +811,34 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <script>
-    // City bounds (expanded to include Kirkland)
-    const seattleBounds = [
-      [47.495, -122.435],
-      [47.735, -122.19]
-    ];
-
-    const map = L.map("map-inner", {
-      center: [47.6062, -122.3321],
-      zoom: 13,
-      minZoom: 11,
-      maxZoom: 18,
-      maxBounds: seattleBounds,
-      maxBoundsViscosity: 1.0
+    // Initialize MapKit JS with your token
+    const MAPKIT_TOKEN = "eyJraWQiOiJVS0NSUkZRUDNWIiwidHlwIjoiSldUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiI5TUpEODg2VTgzIiwiaWF0IjoxNzY0MjcxMDA5LCJleHAiOjE3NjQ5MjE1OTl9.be2LOT2FUlTLiVUTrCfnm4l_pIMWQB2K2hzvl0AvqRr1cVXG_9llrE5bHKFeFiWtP0kdxFzBpV1WV_ggVO7MkA"; // Replace with your actual token
+    
+    mapkit.init({
+      authorizationCallback: function(done) {
+        done(MAPKIT_TOKEN);
+      }
     });
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19
-    }).addTo(map);
+    // City bounds (expanded to include Kirkland)
+    const seattleBounds = {
+      north: 47.735,
+      south: 47.495,
+      east: -122.19,
+      west: -122.435
+    };
+
+    const map = new mapkit.Map("map-inner", {
+      center: new mapkit.Coordinate(47.6062, -122.3321),
+      showsMapTypeControl: false,
+      showsZoomControl: true,
+      showsUserLocationControl: false,
+      showsCompass: mapkit.FeatureVisibility.Hidden
+    });
+    
+    // Set initial camera distance (zoom level equivalent)
+    map.cameraDistance = 10000; // Roughly equivalent to zoom 13
 
     function isMobile() {
       return window.matchMedia("(max-width: 768px)").matches;
@@ -863,47 +848,17 @@
     if (mobileBackButton) {
       mobileBackButton.addEventListener("click", function () {
         document.body.classList.remove("show-map");
-        setTimeout(function () {
-          map.invalidateSize();
-        }, 250);
       });
     }
 
-    // Map pin icons
-    const seattleFlagIcon = L.icon({
-      iconUrl: "http://papaya.party/img/sea-pin.png",
-      iconSize: [32, 45],
-      iconAnchor: [16, 22],
-      popupAnchor: [0, -28]
-    });
-
-    const selectedIcon = L.icon({
-      iconUrl: "https://papaya.party/img/sea-pin-red.png",
-      iconSize: [32, 45],
-      iconAnchor: [16, 22],
-      popupAnchor: [0, -28]
-    });
-
-    const pinOne = L.icon({
-      iconUrl: "http://papaya.party/img/sea-pin-one.png",
-      iconSize: [32, 45],
-      iconAnchor: [16, 22],
-      popupAnchor: [0, -28]
-    });
-
-    const pinTwo = L.icon({
-      iconUrl: "http://papaya.party/img/sea-pin-two.png",
-      iconSize: [32, 45],
-      iconAnchor: [16, 22],
-      popupAnchor: [0, -28]
-    });
-
-    const pinThree = L.icon({
-      iconUrl: "https://papaya.party/img/sea-pin-three.png",
-      iconSize: [32, 45],
-      iconAnchor: [16, 22],
-      popupAnchor: [0, -28]
-    });
+    // Map pin icon URLs
+    const pinIcons = {
+      default: "http://papaya.party/img/sea-pin.png",
+      selected: "https://papaya.party/img/sea-pin-red.png",
+      one: "http://papaya.party/img/sea-pin-one.png",
+      two: "http://papaya.party/img/sea-pin-two.png",
+      three: "https://papaya.party/img/sea-pin-three.png"
+    };
 
     const markersById = {};
     let locations = [];
@@ -911,6 +866,134 @@
     let selectedTypes = new Set();
     let searchQuery = '';
     let currentActiveId = null;
+    let customPopup = null;
+    let currentPopupAnnotation = null;
+
+    function updatePopupPosition() {
+      if (!customPopup || !currentPopupAnnotation) return;
+      
+      var mapElement = document.getElementById('map-inner');
+      var mapRect = mapElement.getBoundingClientRect();
+      var pagePoint = map.convertCoordinateToPointOnPage(currentPopupAnnotation.coordinate);
+      
+      var mapX = pagePoint.x - mapRect.left;
+      var mapY = pagePoint.y - mapRect.top;
+      
+      var popupWidth = customPopup.offsetWidth || 290;
+      var popupHeight = customPopup.offsetHeight || 200;
+      
+      // Always center the popup on the pin horizontally
+      var left = mapX - popupWidth / 2;
+      
+      // Always position above the pin
+      var top = mapY - popupHeight - 45;
+      
+      customPopup.style.left = left + 'px';
+      customPopup.style.top = top + 'px';
+    }
+
+    function showCustomPopup(loc, annotation) {
+      // Remove existing popup
+      if (customPopup) {
+        customPopup.remove();
+      }
+
+      currentPopupAnnotation = annotation;
+
+      // Create popup element
+      customPopup = document.createElement('div');
+      customPopup.style.cssText = `
+        position: absolute;
+        z-index: 10000;
+        pointer-events: auto;
+        visibility: hidden;
+      `;
+      customPopup.innerHTML = buildPopupHtml(loc);
+      
+      // Add close handler
+      customPopup.addEventListener('click', function() {
+        if (customPopup) {
+          customPopup.remove();
+          customPopup = null;
+          currentPopupAnnotation = null;
+        }
+        map.selectedAnnotation = null;
+      });
+
+      // Add to DOM first to get dimensions
+      var mapElement = document.getElementById('map-inner');
+      mapElement.appendChild(customPopup);
+      
+      // Calculate position after adding to DOM
+      setTimeout(function() {
+        var popupWidth = customPopup.offsetWidth || 290;
+        var popupHeight = customPopup.offsetHeight || 200;
+        var mapRect = mapElement.getBoundingClientRect();
+        
+        // Check if we need to adjust the map
+        var pagePoint = map.convertCoordinateToPointOnPage(annotation.coordinate);
+        var mapX = pagePoint.x - mapRect.left;
+        var mapY = pagePoint.y - mapRect.top;
+        
+        var needsAdjustment = false;
+        
+        // Calculate how much we need to move the pin (in pixels)
+        var pinOffsetX = 0;
+        var pinOffsetY = 0;
+        
+        // Check vertical bounds - popup needs space above the pin
+        var requiredTopSpace = popupHeight + 55; // popup height + pin height + padding
+        if (mapY < requiredTopSpace) {
+          needsAdjustment = true;
+          pinOffsetY = requiredTopSpace - mapY + 20; // Move pin down (positive pixels)
+        }
+        
+        // Check horizontal bounds - popup should be centered on pin
+        var popupLeft = mapX - popupWidth / 2;
+        var popupRight = mapX + popupWidth / 2;
+        
+        if (popupLeft < 20) {
+          needsAdjustment = true;
+          pinOffsetX = 20 - popupLeft; // Move pin right (positive pixels)
+        } else if (popupRight > mapRect.width - 20) {
+          needsAdjustment = true;
+          pinOffsetX = (mapRect.width - 20) - popupRight; // Move pin left (negative pixels)
+        }
+        
+        if (needsAdjustment) {
+          // Convert pixel offsets to coordinate offsets
+          // Moving the pin down means moving the map center up (increasing latitude)
+          // Moving the pin right means moving the map center left (decreasing longitude)
+          var currentSpan = map.region.span;
+          var latPerPixel = currentSpan.latitudeDelta / mapRect.height;
+          var lonPerPixel = currentSpan.longitudeDelta / mapRect.width;
+          
+          var currentCenter = map.center;
+          var newCenter = new mapkit.Coordinate(
+            currentCenter.latitude + (pinOffsetY * latPerPixel), // Move pin down = increase lat
+            currentCenter.longitude - (pinOffsetX * lonPerPixel)  // Move pin right = decrease lon
+          );
+          map.setCenterAnimated(newCenter, true);
+          
+          // Wait for map to pan, then position popup
+          setTimeout(function() {
+            updatePopupPosition();
+            customPopup.style.visibility = 'visible';
+          }, 350);
+        } else {
+          updatePopupPosition();
+          customPopup.style.visibility = 'visible';
+        }
+      }, 10);
+    }
+
+    function hideCustomPopup() {
+      if (customPopup) {
+        customPopup.remove();
+        customPopup = null;
+        currentPopupAnnotation = null;
+      }
+    }
 
     function buildPopupHtml(loc) {
       const photo =
@@ -989,13 +1072,11 @@
       }
 
       for (const markerId in markersById) {
-        const marker = markersById[markerId];
+        const annotation = markersById[markerId];
         if (activeId && markerId === activeId) {
-          marker.setIcon(selectedIcon);
-          marker.setZIndexOffset(1000);
+          annotation.url = { 1: pinIcons.selected };
         } else {
-          marker.setIcon(marker._defaultIcon);
-          marker.setZIndexOffset(0);
+          annotation.url = { 1: annotation.data.defaultIcon };
         }
       }
     }
@@ -1040,9 +1121,9 @@
         }
       });
 
-      // Update map markers visibility with fade
+      // Update map annotations visibility
       for (var id in markersById) {
-        var marker = markersById[id];
+        var annotation = markersById[id];
         var loc = locations.find(function(l) { return String(l.id) === id; });
         if (loc) {
           var stars = String(Number(loc.stars) || 0);
@@ -1053,25 +1134,15 @@
           var matchesTypeFilter = selectedTypes.size === 0 || selectedTypes.has(type);
           var matchesSearch = fuzzyMatch(loc.name || '', searchQuery);
           
-          var icon = marker.getElement();
-          if (icon) {
-            if (matchesStarFilter && matchesTypeFilter && matchesSearch) {
-              // Fade in and enable interactions
-              icon.style.opacity = '1';
-              icon.style.pointerEvents = 'auto';
-            } else {
-              // Fade out and disable interactions
-              icon.style.opacity = '0';
-              icon.style.pointerEvents = 'none';
-            }
-          }
+          annotation.visible = matchesStarFilter && matchesTypeFilter && matchesSearch;
         }
       }
       
       // Only clear selection if the active item was filtered out
       if (activeItemFiltered) {
         setActivePoi(null);
-        map.closePopup();
+        map.selectedAnnotation = null;
+        hideCustomPopup();
       }
     }
 
@@ -1092,49 +1163,42 @@
         var popupHtml = buildPopupHtml(loc);
 
         var starCount = Number(loc.stars) || 0;
-        var baseIcon = seattleFlagIcon;
+        var baseIcon = pinIcons.default;
 
         if (starCount === 1) {
-          baseIcon = pinOne;
+          baseIcon = pinIcons.one;
         } else if (starCount === 2) {
-          baseIcon = pinTwo;
+          baseIcon = pinIcons.two;
         } else if (starCount >= 3) {
-          baseIcon = pinThree;
+          baseIcon = pinIcons.three;
         }
 
-        var marker = L.marker(loc.coords, { 
-          icon: baseIcon,
-          opacity: 1
-        })
-          .addTo(map)
-          .bindPopup(popupHtml);
-
-        marker._defaultIcon = baseIcon;
-        markersById[loc.id] = marker;
-        
-        // Add CSS transition to marker icon
-        var icon = marker.getElement();
-        if (icon) {
-          icon.style.transition = 'opacity 0.2s ease';
-        }
-
-        marker.on("click", function () {
-          setActivePoi(loc.id);
-          scrollToPoi(loc.id);
+        // Create MapKit annotation
+        var coordinate = new mapkit.Coordinate(loc.coords[0], loc.coords[1]);
+        var annotation = new mapkit.ImageAnnotation(coordinate, {
+          url: { 1: baseIcon },
+          size: { width: 32, height: 45 },
+          anchorOffset: new DOMPoint(0, -22.5),
+          data: {
+            id: loc.id,
+            popupHtml: popupHtml,
+            defaultIcon: baseIcon,
+            location: loc
+          },
+          calloutEnabled: false,
+          animates: false
         });
 
-        marker.on("popupopen", function (e) {
-          var popupRoot = e.popup.getElement();
-          if (!popupRoot) return;
-          var card = popupRoot.querySelector(".popup-card");
-          if (!card) return;
-          card.addEventListener(
-            "click",
-            function () {
-              marker.closePopup();
-            },
-            { once: true }
-          );
+        map.addAnnotation(annotation);
+        markersById[loc.id] = annotation;
+
+        // Handle annotation selection
+        annotation.addEventListener("select", function(event) {
+          setActivePoi(loc.id);
+          scrollToPoi(loc.id);
+          
+          // Show custom popup overlay
+          showCustomPopup(loc, annotation);
         });
 
         var li = document.createElement("li");
@@ -1183,17 +1247,17 @@
 
         li.innerHTML = liHtml;
 
-        (function(location, markerRef) {
+        (function(location, annotationRef) {
           li.addEventListener("click", function () {
             if (isMobile()) {
               document.body.classList.add("show-map");
               setTimeout(function () {
-                map.invalidateSize();
-                // Center the map after invalidating size on mobile
-                map.setView(location.coords, 15, { animate: true });
+                // Center the map after showing on mobile
+                var coord = new mapkit.Coordinate(location.coords[0], location.coords[1]);
+                map.setCenterAnimated(coord, true);
+                map.cameraDistance = 5000; // Closer zoom for detail
                 setTimeout(function() {
-                  markerRef.openPopup();
-                  // Set active after popup opens to avoid race condition
+                  map.selectedAnnotation = annotationRef;
                   setTimeout(function() {
                     setActivePoi(location.id);
                   }, 50);
@@ -1201,35 +1265,66 @@
               }, 300);
             } else {
               // Center the map on the pin
-              map.setView(location.coords, 15, { animate: true });
+              var coord = new mapkit.Coordinate(location.coords[0], location.coords[1]);
+              map.setCenterAnimated(coord, true);
+              map.cameraDistance = 5000; // Closer zoom for detail
               
-              // Open popup after a short delay
+              // Select annotation after a short delay
               setTimeout(function() {
-                markerRef.openPopup();
-                // Set active after popup opens to avoid popupclose clearing it
+                map.selectedAnnotation = annotationRef;
                 setTimeout(function() {
                   setActivePoi(location.id);
                 }, 50);
               }, 300);
             }
           });
-        })(loc, marker);
+        })(loc, annotation);
 
         poiListEl.appendChild(li);
       });
 
       if (locations.length > 0) {
         var first = locations[0];
-        map.setView(first.coords, 14);
+        var coord = new mapkit.Coordinate(first.coords[0], first.coords[1]);
+        map.setCenterAnimated(coord, true);
+        map.cameraDistance = 8000; // Medium zoom level
         if (markersById[first.id]) {
-          markersById[first.id].openPopup();
+          setTimeout(function() {
+            map.selectedAnnotation = markersById[first.id];
+          }, 500);
         }
         setActivePoi(first.id);
       }
     }
 
-    map.on("popupclose", function () {
+    // Handle annotation deselection
+    map.addEventListener("deselect", function () {
       setActivePoi(null);
+      hideCustomPopup();
+    });
+
+    // Update popup position when map moves
+    var isUpdating = false;
+    
+    function continuouslyUpdatePopup() {
+      if (isUpdating && customPopup && currentPopupAnnotation) {
+        updatePopupPosition();
+        requestAnimationFrame(continuouslyUpdatePopup);
+      }
+    }
+    
+    map.addEventListener("region-change-start", function() {
+      // Start updating popup position continuously during drag
+      if (customPopup && currentPopupAnnotation && !isUpdating) {
+        isUpdating = true;
+        requestAnimationFrame(continuouslyUpdatePopup);
+      }
+    });
+
+    map.addEventListener("region-change-end", function() {
+      // Stop continuous updates and do final position update
+      isUpdating = false;
+      updatePopupPosition();
     });
 
     async function loadLocations() {
