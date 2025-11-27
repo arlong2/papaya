@@ -132,6 +132,52 @@
       margin-left: 12px;
     }
 
+    /* Mobile menu button - hidden on desktop, shown on mobile */
+    #mobile-menu-toggle {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      width: 44px;
+      height: 44px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    #mobile-menu-toggle span {
+      display: block;
+      width: 28px;
+      height: 3px;
+      background: var(--text-main);
+      margin: 4px 0;
+      transition: 0.3s;
+      border-radius: 2px;
+    }
+
+    #mobile-nav-menu {
+      display: none;
+      position: absolute;
+      top: 64px;
+      right: 12px;
+      background: white;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      min-width: 180px;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    #mobile-nav-menu.open {
+      z-index: 10000;
+      pointer-events: auto;
+    }
+
 
 
     /* MAIN APP LAYOUT */
@@ -708,6 +754,107 @@
 
     /* ====== MOBILE ====== */
     @media (max-width: 768px) {
+      /* Increase font sizes for mobile */
+      body {
+        font-size: 16px;
+      }
+
+      .poi-title {
+        font-size: 18px;
+      }
+
+      .poi-subtitle {
+        font-size: 15px;
+      }
+
+      .poi-desc {
+        font-size: 14px;
+      }
+
+      .filter-btn {
+        font-size: 15px;
+        padding: 8px 14px;
+      }
+
+      #search-input {
+        font-size: 16px;
+        padding: 10px 36px 10px 14px;
+      }
+
+      /* Show hamburger menu button on mobile */
+      #mobile-menu-toggle {
+        display: flex !important;
+      }
+
+      #mobile-menu-toggle.active span:nth-child(1) {
+        transform: rotate(-45deg) translate(-5px, 6px);
+      }
+
+      #mobile-menu-toggle.active span:nth-child(2) {
+        opacity: 0;
+      }
+
+      #mobile-menu-toggle.active span:nth-child(3) {
+        transform: rotate(45deg) translate(-5px, -6px);
+      }
+
+      /* Hide desktop nav links on mobile */
+      #top-nav .nav-about,
+      #top-nav .nav-edition {
+        display: none !important;
+      }
+
+      /* Mobile dropdown menu */
+      #mobile-nav-menu {
+        min-width: 200px;
+      }
+
+      #mobile-nav-menu.open {
+        display: block;
+      }
+
+      #mobile-nav-menu a {
+        display: block;
+        padding: 16px 24px;
+        color: var(--text-main);
+        text-decoration: none;
+        font-size: 17px;
+        font-weight: 500;
+        border-bottom: 1px solid var(--card-border);
+      }
+
+      #mobile-nav-menu a:first-child {
+        border-radius: 12px 12px 0 0;
+      }
+
+      #mobile-nav-menu a:last-child {
+        border-bottom: none;
+        border-radius: 0 0 12px 12px;
+      }
+
+      #mobile-nav-menu a:active {
+        background: rgba(0, 0, 0, 0.08);
+      }
+
+      /* Collapsible search and filters */
+      #search-wrapper,
+      #filters-section {
+        transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
+        overflow: hidden;
+      }
+
+      body.scrolling-down #search-wrapper {
+        max-height: 0;
+        opacity: 0;
+        margin-bottom: 0;
+      }
+
+      body.scrolling-down #filters-section {
+        max-height: 0;
+        opacity: 0;
+        margin-bottom: 0;
+      }
+
       .popup-card-photo,
       .popup-description,
       .mk-callout-close-button {
@@ -749,10 +896,10 @@
         top: 12px;
         left: 12px;
         z-index: 1000;
-        padding: 7px 14px;
+        padding: 9px 16px;
         border-radius: 999px;
         border: 1px solid rgba(148, 163, 184, 0.9);
-        font-size: 13px;
+        font-size: 15px;
         font-weight: 500;
         background: #ffffff;
         color: var(--accent-dark);
@@ -785,6 +932,18 @@
     <a href="seattle.html" class="nav-about">Guide</a>
     <a href="suggest.html" class="nav-about">Suggest</a>
     <div class="nav-edition">Winter 2025 edition</div>
+    
+    <!-- Mobile hamburger menu -->
+    <button id="mobile-menu-toggle">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <div id="mobile-nav-menu">
+      <a href="about.html">About</a>
+      <a href="seattle.html">Guide</a>
+      <a href="suggest.html">Suggest</a>
+    </div>
   </div>
 
   <div class="app-shell">
@@ -843,6 +1002,24 @@
     
     // Global variables
     let map;
+    const markersById = {};
+    let locations = [];
+    let selectedStars = new Set();
+    let selectedTypes = new Set();
+    let searchQuery = '';
+    let currentActiveId = null;
+    let customPopup = null;
+    let currentPopupAnnotation = null;
+    let hoverOverlays = {};
+    
+    // Map pin icon URLs
+    const pinIcons = {
+      default: "http://papaya.party/img/sea-pin.png",
+      selected: "https://papaya.party/img/sea-pin-red.png",
+      one: "http://papaya.party/img/sea-pin-one.png",
+      two: "http://papaya.party/img/sea-pin-two.png",
+      three: "https://papaya.party/img/sea-pin-three.png"
+    };
     
     // City bounds (expanded to include Kirkland)
     const seattleBounds = {
@@ -851,6 +1028,146 @@
       east: -122.19,
       west: -122.435
     };
+
+    // Helper functions (global scope)
+    function isMobile() {
+      return window.matchMedia("(max-width: 768px)").matches;
+    }
+
+    function hideCustomPopup() {
+      if (customPopup) {
+        customPopup.remove();
+        customPopup = null;
+        currentPopupAnnotation = null;
+      }
+    }
+
+    function scrollToPoi(id) {
+      const list = document.getElementById("poi-list");
+      if (!list) return;
+
+      const item = list.querySelector('.poi-item[data-id="' + id + '"]');
+      if (!item) return;
+
+      const listRect = list.getBoundingClientRect();
+      const itemRect = item.getBoundingClientRect();
+      const offset = itemRect.top - listRect.top;
+
+      const targetScrollTop =
+        list.scrollTop +
+        offset -
+        (list.clientHeight / 2 - item.clientHeight / 2);
+
+      list.scrollTo({
+        top: targetScrollTop,
+        behavior: "smooth"
+      });
+    }
+
+    function setActivePoi(id) {
+      const activeId = id != null ? String(id) : null;
+      currentActiveId = activeId;
+
+      const items = document.querySelectorAll(".poi-item");
+      for (let i = 0; i < items.length; i++) {
+        if (activeId && items[i].dataset.id === activeId) {
+          items[i].classList.add("active");
+        } else {
+          items[i].classList.remove("active");
+        }
+      }
+
+      for (const markerId in markersById) {
+        const annotation = markersById[markerId];
+        if (activeId && markerId === activeId) {
+          annotation.url = { 1: pinIcons.selected };
+        } else {
+          annotation.url = { 1: annotation.data.defaultIcon };
+        }
+      }
+    }
+
+    function fuzzyMatch(text, query) {
+      if (!query) return true;
+      text = text.toLowerCase();
+      query = query.toLowerCase();
+      
+      var textIndex = 0;
+      for (var i = 0; i < query.length; i++) {
+        textIndex = text.indexOf(query[i], textIndex);
+        if (textIndex === -1) return false;
+        textIndex++;
+      }
+      return true;
+    }
+
+    function filterLocations() {
+      var poiListEl = document.getElementById("poi-list");
+      if (!poiListEl) return;
+      
+      var items = poiListEl.querySelectorAll('.poi-item');
+      var activeItemFiltered = false;
+      
+      items.forEach(function(item) {
+        var stars = item.dataset.stars;
+        var type = item.dataset.type || 'restaurant';
+        var name = item.dataset.name || '';
+        
+        // If no filters selected, show all
+        var matchesStarFilter = selectedStars.size === 0 || selectedStars.has(stars);
+        var matchesTypeFilter = selectedTypes.size === 0 || selectedTypes.has(type);
+        var matchesSearch = fuzzyMatch(name, searchQuery);
+        
+        if (matchesStarFilter && matchesTypeFilter && matchesSearch) {
+          item.style.display = '';
+        } else {
+          item.style.display = 'none';
+          // Check if the currently active item is being filtered out
+          if (currentActiveId && item.dataset.id === currentActiveId) {
+            activeItemFiltered = true;
+          }
+        }
+      });
+
+      // Update map annotations visibility with fade effect
+      for (var id in markersById) {
+        var annotation = markersById[id];
+        var loc = locations.find(function(l) { return String(l.id) === id; });
+        if (loc) {
+          var stars = String(Number(loc.stars) || 0);
+          var type = loc.type || 'restaurant';
+          
+          // If no filters selected, show all
+          var matchesStarFilter = selectedStars.size === 0 || selectedStars.has(stars);
+          var matchesTypeFilter = selectedTypes.size === 0 || selectedTypes.has(type);
+          var matchesSearch = fuzzyMatch(loc.name || '', searchQuery);
+          
+          var shouldBeVisible = matchesStarFilter && matchesTypeFilter && matchesSearch;
+          
+          // Fade out before hiding, fade in when showing
+          if (!shouldBeVisible && annotation.visible) {
+            // Fade out
+            annotation.visible = false;
+          } else if (shouldBeVisible && !annotation.visible) {
+            // Fade in
+            annotation.visible = true;
+          }
+          
+          // Also update hover overlay visibility
+          if (hoverOverlays[id]) {
+            hoverOverlays[id].style.opacity = shouldBeVisible ? '1' : '0';
+            hoverOverlays[id].style.pointerEvents = shouldBeVisible ? 'auto' : 'none';
+          }
+        }
+      }
+      
+      // Only clear selection if the active item was filtered out
+      if (activeItemFiltered) {
+        setActivePoi(null);
+        if (map) map.selectedAnnotation = null;
+        hideCustomPopup();
+      }
+    }
 
     // Load config and initialize MapKit
     async function initializeMapKit() {
@@ -880,35 +1197,12 @@
         // Set initial camera distance (zoom level equivalent)
         map.cameraDistance = 10000; // Roughly equivalent to zoom 13
 
-    function isMobile() {
-      return window.matchMedia("(max-width: 768px)").matches;
-    }
-
     var mobileBackButton = document.getElementById("mobile-back-button");
     if (mobileBackButton) {
       mobileBackButton.addEventListener("click", function () {
         document.body.classList.remove("show-map");
       });
     }
-
-    // Map pin icon URLs
-    const pinIcons = {
-      default: "http://papaya.party/img/sea-pin.png",
-      selected: "https://papaya.party/img/sea-pin-red.png",
-      one: "http://papaya.party/img/sea-pin-one.png",
-      two: "http://papaya.party/img/sea-pin-two.png",
-      three: "https://papaya.party/img/sea-pin-three.png"
-    };
-
-    const markersById = {};
-    let locations = [];
-    let selectedStars = new Set();
-    let selectedTypes = new Set();
-    let searchQuery = '';
-    let currentActiveId = null;
-    let customPopup = null;
-    let currentPopupAnnotation = null;
-    let hoverOverlays = {};
 
     function updatePopupPosition() {
       if (!customPopup || !currentPopupAnnotation) return;
@@ -1028,14 +1322,6 @@
       }, 10);
     }
 
-    function hideCustomPopup() {
-      if (customPopup) {
-        customPopup.remove();
-        customPopup = null;
-        currentPopupAnnotation = null;
-      }
-    }
-
     function buildPopupHtml(loc) {
       const photo =
         loc.photo ||
@@ -1075,116 +1361,6 @@
       html += "</div>";
 
       return html;
-    }
-
-    function scrollToPoi(id) {
-      const list = document.getElementById("poi-list");
-      if (!list) return;
-
-      const item = list.querySelector('.poi-item[data-id="' + id + '"]');
-      if (!item) return;
-
-      const listRect = list.getBoundingClientRect();
-      const itemRect = item.getBoundingClientRect();
-      const offset = itemRect.top - listRect.top;
-
-      const targetScrollTop =
-        list.scrollTop +
-        offset -
-        (list.clientHeight / 2 - item.clientHeight / 2);
-
-      list.scrollTo({
-        top: targetScrollTop,
-        behavior: "smooth"
-      });
-    }
-
-    function setActivePoi(id) {
-      const activeId = id != null ? String(id) : null;
-      currentActiveId = activeId;
-
-      const items = document.querySelectorAll(".poi-item");
-      for (let i = 0; i < items.length; i++) {
-        if (activeId && items[i].dataset.id === activeId) {
-          items[i].classList.add("active");
-        } else {
-          items[i].classList.remove("active");
-        }
-      }
-
-      for (const markerId in markersById) {
-        const annotation = markersById[markerId];
-        if (activeId && markerId === activeId) {
-          annotation.url = { 1: pinIcons.selected };
-        } else {
-          annotation.url = { 1: annotation.data.defaultIcon };
-        }
-      }
-    }
-
-    function fuzzyMatch(text, query) {
-      if (!query) return true;
-      text = text.toLowerCase();
-      query = query.toLowerCase();
-      
-      var textIndex = 0;
-      for (var i = 0; i < query.length; i++) {
-        textIndex = text.indexOf(query[i], textIndex);
-        if (textIndex === -1) return false;
-        textIndex++;
-      }
-      return true;
-    }
-
-    function filterLocations() {
-      var poiListEl = document.getElementById("poi-list");
-      var items = poiListEl.querySelectorAll('.poi-item');
-      var activeItemFiltered = false;
-      
-      items.forEach(function(item) {
-        var stars = item.dataset.stars;
-        var type = item.dataset.type || 'eat';
-        var name = item.dataset.name || '';
-        
-        // If no filters selected, show all
-        var matchesStarFilter = selectedStars.size === 0 || selectedStars.has(stars);
-        var matchesTypeFilter = selectedTypes.size === 0 || selectedTypes.has(type);
-        var matchesSearch = fuzzyMatch(name, searchQuery);
-        
-        if (matchesStarFilter && matchesTypeFilter && matchesSearch) {
-          item.style.display = '';
-        } else {
-          item.style.display = 'none';
-          // Check if the currently active item is being filtered out
-          if (currentActiveId && item.dataset.id === currentActiveId) {
-            activeItemFiltered = true;
-          }
-        }
-      });
-
-      // Update map annotations visibility
-      for (var id in markersById) {
-        var annotation = markersById[id];
-        var loc = locations.find(function(l) { return String(l.id) === id; });
-        if (loc) {
-          var stars = String(Number(loc.stars) || 0);
-          var type = loc.type || 'eat';
-          
-          // If no filters selected, show all
-          var matchesStarFilter = selectedStars.size === 0 || selectedStars.has(stars);
-          var matchesTypeFilter = selectedTypes.size === 0 || selectedTypes.has(type);
-          var matchesSearch = fuzzyMatch(loc.name || '', searchQuery);
-          
-          annotation.visible = matchesStarFilter && matchesTypeFilter && matchesSearch;
-        }
-      }
-      
-      // Only clear selection if the active item was filtered out
-      if (activeItemFiltered) {
-        setActivePoi(null);
-        map.selectedAnnotation = null;
-        hideCustomPopup();
-      }
     }
 
     function initLocations(locs) {
@@ -1342,10 +1518,6 @@
         setActivePoi(first.id);
       }
 
-      // Add hover effects to all annotation images after they're rendered
-      setTimeout(function() {
-        addHoverEffectsToAnnotations();
-      }, 500);
     }
 
     function createHoverOverlay(annotation, annotationId) {
@@ -1362,6 +1534,8 @@
         cursor: pointer;
         z-index: 5000;
         pointer-events: auto;
+        transition: opacity 0.3s ease;
+        opacity: 1;
       `;
       
       var mapElement = document.getElementById('map-inner');
@@ -1473,6 +1647,9 @@
     }
 
         loadLocations();
+
+        // Setup filter button handlers after locations are loaded
+        setupFilterHandlers();
       } catch (err) {
         console.error('Error initializing MapKit:', err);
         document.getElementById('poi-list').innerHTML = 
@@ -1480,98 +1657,160 @@
       }
     }
 
+    // Setup filter button handlers
+    function setupFilterHandlers() {
+      // Type filter button handlers (multi-select)
+      var typeFilterButtons = document.querySelectorAll('#type-filter-buttons .filter-btn');
+      console.log('Found type filter buttons:', typeFilterButtons.length);
+      
+      typeFilterButtons.forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          console.log('Type filter clicked:', btn.dataset.type);
+          var type = btn.dataset.type;
+          
+          if (selectedTypes.has(type)) {
+            selectedTypes.delete(type);
+            btn.classList.remove('active');
+          } else {
+            selectedTypes.add(type);
+            btn.classList.add('active');
+          }
+          
+          console.log('Selected types:', Array.from(selectedTypes));
+          filterLocations();
+        });
+      });
+
+      // Star filter button handlers (multi-select)
+      var starFilterButtons = document.querySelectorAll('#filter-buttons .filter-btn');
+      console.log('Found star filter buttons:', starFilterButtons.length);
+      
+      starFilterButtons.forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          console.log('Star filter clicked:', btn.dataset.stars);
+          var stars = btn.dataset.stars;
+          var starIcons = btn.querySelectorAll('.filter-star-icon');
+          
+          if (selectedStars.has(stars)) {
+            selectedStars.delete(stars);
+            btn.classList.remove('active');
+            // Change back to filled stars
+            starIcons.forEach(function(icon) {
+              icon.src = 'http://papaya.party/img/sea-star-big.png';
+            });
+          } else {
+            selectedStars.add(stars);
+            btn.classList.add('active');
+            // Change to clear stars
+            starIcons.forEach(function(icon) {
+              icon.src = 'http://papaya.party/img/sea-star-big-clear-full.png';
+            });
+          }
+          
+          console.log('Selected stars:', Array.from(selectedStars));
+          filterLocations();
+        });
+      });
+
+      // Search input handler
+      var searchInput = document.getElementById('search-input');
+      var searchClear = document.getElementById('search-clear');
+      
+      if (searchInput && searchClear) {
+        searchInput.addEventListener('input', function() {
+          searchQuery = this.value;
+          filterLocations();
+          
+          // Show/hide clear button
+          if (searchQuery) {
+            searchClear.classList.add('visible');
+          } else {
+            searchClear.classList.remove('visible');
+          }
+        });
+
+        // Clear button handler
+        searchClear.addEventListener('click', function() {
+          searchInput.value = '';
+          searchQuery = '';
+          filterLocations();
+          searchClear.classList.remove('visible');
+          searchInput.focus();
+        });
+      }
+
+      // Filters collapse/expand handler
+      var filtersHeader = document.getElementById('filters-header');
+      var filtersSection = document.getElementById('filters-section');
+      var filtersContent = document.getElementById('filters-content');
+      var filtersToggle = document.getElementById('filters-toggle');
+      
+      if (filtersHeader && filtersContent && filtersSection && filtersToggle) {
+        filtersHeader.addEventListener('click', function() {
+          if (filtersContent.classList.contains('expanded')) {
+            filtersContent.classList.remove('expanded');
+            filtersContent.classList.add('collapsed');
+            filtersSection.classList.add('collapsed');
+            filtersToggle.classList.add('collapsed');
+          } else {
+            filtersContent.classList.remove('collapsed');
+            filtersContent.classList.add('expanded');
+            filtersSection.classList.remove('collapsed');
+            filtersToggle.classList.remove('collapsed');
+          }
+        });
+      }
+    }
+
     // Initialize MapKit when page loads
     initializeMapKit();
 
-    // Type filter button handlers (multi-select)
-    var typeFilterButtons = document.querySelectorAll('#type-filter-buttons .filter-btn');
-    typeFilterButtons.forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var type = btn.dataset.type;
+    // Mobile hamburger menu
+    var mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    var mobileNavMenu = document.getElementById('mobile-nav-menu');
+    
+    if (mobileMenuToggle) {
+      mobileMenuToggle.addEventListener('click', function() {
+        this.classList.toggle('active');
+        mobileNavMenu.classList.toggle('open');
+      });
+
+      // Close menu when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!mobileMenuToggle.contains(e.target) && !mobileNavMenu.contains(e.target)) {
+          mobileMenuToggle.classList.remove('active');
+          mobileNavMenu.classList.remove('open');
+        }
+      });
+    }
+
+    // Mobile scroll detection for collapsing search/filters
+    if (isMobile()) {
+      var poiList = document.getElementById('poi-list');
+      var lastScrollTop = 0;
+      var scrollThreshold = 50;
+
+      poiList.addEventListener('scroll', function() {
+        var scrollTop = this.scrollTop;
         
-        if (selectedTypes.has(type)) {
-          selectedTypes.delete(type);
-          btn.classList.remove('active');
+        if (scrollTop > scrollThreshold) {
+          if (scrollTop > lastScrollTop) {
+            // Scrolling down
+            document.body.classList.add('scrolling-down');
+          } else {
+            // Scrolling up
+            document.body.classList.remove('scrolling-down');
+          }
         } else {
-          selectedTypes.add(type);
-          btn.classList.add('active');
+          // Near top, always show
+          document.body.classList.remove('scrolling-down');
         }
         
-        filterLocations();
+        lastScrollTop = scrollTop;
       });
-    });
+    }
 
-    // Star filter button handlers (multi-select)
-    var starFilterButtons = document.querySelectorAll('#filter-buttons .filter-btn');
-    starFilterButtons.forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var stars = btn.dataset.stars;
-        var starIcons = btn.querySelectorAll('.filter-star-icon');
-        
-        if (selectedStars.has(stars)) {
-          selectedStars.delete(stars);
-          btn.classList.remove('active');
-          // Change back to filled stars
-          starIcons.forEach(function(icon) {
-            icon.src = 'http://papaya.party/img/sea-star-big.png';
-          });
-        } else {
-          selectedStars.add(stars);
-          btn.classList.add('active');
-          // Change to clear stars
-          starIcons.forEach(function(icon) {
-            icon.src = 'http://papaya.party/img/sea-star-big-clear-full.png';
-          });
-        }
-        
-        filterLocations();
-      });
-    });
 
-    // Search input handler
-    var searchInput = document.getElementById('search-input');
-    var searchClear = document.getElementById('search-clear');
-    
-    searchInput.addEventListener('input', function() {
-      searchQuery = this.value;
-      filterLocations();
-      
-      // Show/hide clear button
-      if (searchQuery) {
-        searchClear.classList.add('visible');
-      } else {
-        searchClear.classList.remove('visible');
-      }
-    });
-
-    // Clear button handler
-    searchClear.addEventListener('click', function() {
-      searchInput.value = '';
-      searchQuery = '';
-      filterLocations();
-      searchClear.classList.remove('visible');
-      searchInput.focus();
-    });
-
-    // Filters collapse/expand handler
-    var filtersHeader = document.getElementById('filters-header');
-    var filtersSection = document.getElementById('filters-section');
-    var filtersContent = document.getElementById('filters-content');
-    var filtersToggle = document.getElementById('filters-toggle');
-    
-    filtersHeader.addEventListener('click', function() {
-      if (filtersContent.classList.contains('expanded')) {
-        filtersContent.classList.remove('expanded');
-        filtersContent.classList.add('collapsed');
-        filtersSection.classList.add('collapsed');
-        filtersToggle.classList.add('collapsed');
-      } else {
-        filtersContent.classList.remove('collapsed');
-        filtersContent.classList.add('expanded');
-        filtersSection.classList.remove('collapsed');
-        filtersToggle.classList.remove('collapsed');
-      }
-    });
   </script>
 </body>
 </html>
