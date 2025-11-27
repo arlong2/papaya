@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Seattle Map – Teal Flag Theme</title>
+  <title>The Seattle List</title>
 
   <!-- Leaflet CSS -->
   <link
@@ -35,7 +35,7 @@
       --text-softer: #9ca3af;
 
       --tomato-jam: rgba(204, 41, 54);
-      --willow-green: rgba(134, 205, 130);
+      --willow-green: rgba(155, 80, 148);
       --jet-black: rgba(0, 42, 50);
     }
 
@@ -253,16 +253,20 @@
       line-height: 16px;
     }
 
-    .poi-type-badge.restaurant {
+    .poi-type-badge.eat {
       background: var(--tomato-jam);
     }
 
-    .poi-type-badge.bar {
+    .poi-type-badge.drink {
       background: var(--jet-black);
     }
 
     .poi-type-badge.shop {
       background: var(--willow-green);
+    }
+
+    .poi-type-badge.coffee {
+      background: #2d5016;
     }
 
     .poi-star-icon {
@@ -506,12 +510,12 @@
       color: #ffffff;
     }
 
-    .filter-btn[data-type="restaurant"].active {
+    .filter-btn[data-type="eat"].active {
       background: var(--tomato-jam);
       border-color: var(--tomato-jam);
     }
 
-    .filter-btn[data-type="bar"].active {
+    .filter-btn[data-type="drink"].active {
       background: var(--jet-black);
       border-color: var(--jet-black);
     }
@@ -519,6 +523,11 @@
     .filter-btn[data-type="shop"].active {
       background: var(--willow-green);
       border-color: var(--willow-green);
+    }
+
+    .filter-btn[data-type="coffee"].active {
+      background: #2d5016;
+      border-color: #2d5016;
     }
 
     /* MAP */
@@ -654,16 +663,20 @@
       line-height: 16px;
     }
 
-    .popup-type-badge.restaurant {
+    .popup-type-badge.eat {
       background: var(--tomato-jam);
     }
 
-    .popup-type-badge.bar {
+    .popup-type-badge.drink {
       background: var(--jet-black);
     }
 
     .popup-type-badge.shop {
       background: var(--willow-green);
+    }
+
+    .popup-type-badge.coffee {
+      background: #2d5016;
     }
 
     .popup-small-icon {
@@ -764,7 +777,7 @@
   <div id="top-nav">
     <div class="nav-logo"></div>
     <div class="nav-textgroup">
-      <div class="nav-title">Seattle Restaurant Guide</div>
+      <div class="nav-title">The Seattle List</div>
       <div class="nav-subtitle">Support local · follow the knot</div>
     </div>
     <a href="about.html" class="nav-about">About</a>
@@ -788,8 +801,9 @@
         <div id="filters-content" class="expanded">
           <div class="filter-group">
             <div id="type-filter-buttons">
-              <button class="filter-btn" data-type="restaurant">Restaurant</button>
-              <button class="filter-btn" data-type="bar">Bar</button>
+              <button class="filter-btn" data-type="eat">Eat</button>
+              <button class="filter-btn" data-type="drink">Drink</button>
+              <button class="filter-btn" data-type="coffee">Coffee</button>
               <button class="filter-btn" data-type="shop">Shop</button>
             </div>
           </div>
@@ -908,7 +922,7 @@
 
       const subtitle = loc.subtitle || "";
       const stars = Number(loc.stars) || 0;
-      const type = loc.type || "restaurant";
+      const type = loc.type || "eat";
 
       let starsHtml = "";
       for (let i = 0; i < stars; i++) {
@@ -1007,7 +1021,7 @@
       
       items.forEach(function(item) {
         var stars = item.dataset.stars;
-        var type = item.dataset.type || 'restaurant';
+        var type = item.dataset.type || 'eat';
         var name = item.dataset.name || '';
         
         // If no filters selected, show all
@@ -1032,7 +1046,7 @@
         var loc = locations.find(function(l) { return String(l.id) === id; });
         if (loc) {
           var stars = String(Number(loc.stars) || 0);
-          var type = loc.type || 'restaurant';
+          var type = loc.type || 'eat';
           
           // If no filters selected, show all
           var matchesStarFilter = selectedStars.size === 0 || selectedStars.has(stars);
@@ -1127,7 +1141,7 @@
         li.className = "poi-item";
         li.dataset.id = loc.id;
         li.dataset.stars = String(starCount);
-        li.dataset.type = loc.type || 'restaurant';
+        li.dataset.type = loc.type || 'eat';
         li.dataset.name = loc.name || '';
         li.dataset.subtitle = loc.subtitle || '';
 
@@ -1139,7 +1153,7 @@
           loc.icon || "http://papaya.party/img/sea-star-big.png";
 
         var stars = starCount;
-        var type = loc.type || 'restaurant';
+        var type = loc.type || 'eat';
         var sidebarStarsHtml = "";
         for (var i = 0; i < stars; i++) {
           sidebarStarsHtml +=
