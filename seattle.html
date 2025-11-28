@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>The Seattle List</title>
 
   <!-- MapKit JS -->
@@ -921,6 +922,19 @@
   </style>
 </head>
 <body>
+  <script>
+    // Immediate password check - runs before page renders
+    (function() {
+      const sessionKey = "seattleListAuth";
+      
+      // Check if already authenticated
+      if (sessionStorage.getItem(sessionKey) !== "authenticated") {
+        // Hide body content immediately
+        document.body.style.display = 'none';
+      }
+    })();
+  </script>
+  
   <!-- TOP NAV BAR -->
   <div id="top-nav">
     <div class="nav-logo"></div>
@@ -994,6 +1008,69 @@
   </div>
 
   <script>
+    // Password protection with hashing
+    // SHA-256 hash of the password
+    // Current password: "seawin25"
+    // To generate a new hash for a different password, run this in browser console:
+    // crypto.subtle.digest('SHA-256', new TextEncoder().encode('your-password')).then(h => console.log(Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join('')))
+    const passwordHash = "d643c1fe1160fd1a7c4158f884d50db30594eb82aaf9f9257e3eaaefc3aa4bcb"; // Hash of "seawin25"
+    const sessionKey = "seattleListAuth";
+    let isAuthenticated = false;
+    
+    // Hash function
+    async function hashPassword(password) {
+      const msgBuffer = new TextEncoder().encode(password);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    
+    // Check authentication
+    async function checkAuth() {
+      // Check if already authenticated in this session
+      if (sessionStorage.getItem(sessionKey) === "authenticated") {
+        isAuthenticated = true;
+        return true;
+      }
+      
+      const userPassword = prompt("Please enter the password to access The Seattle List:");
+      
+      if (!userPassword) {
+        document.body.innerHTML = "<div style='text-align: center; padding: 50px; font-family: sans-serif;'><h1>Access Denied</h1><p>Password required.</p></div>";
+        return false;
+      }
+      
+      // Hash the entered password and compare
+      try {
+        const hash = await hashPassword(userPassword);
+        
+        if (hash !== passwordHash) {
+          alert("Incorrect password. Access denied.");
+          document.body.innerHTML = "<div style='text-align: center; padding: 50px; font-family: sans-serif;'><h1>Access Denied</h1><p>Incorrect password.</p></div>";
+          return false;
+        }
+        
+        // Store authentication in session (cleared when browser closes)
+        sessionStorage.setItem(sessionKey, "authenticated");
+        isAuthenticated = true;
+        return true;
+      } catch (error) {
+        document.body.innerHTML = "<div style='text-align: center; padding: 50px; font-family: sans-serif;'><h1>Access Denied</h1><p>Authentication error.</p></div>";
+        return false;
+      }
+    }
+    
+    // Block execution until authenticated
+    checkAuth().then(authenticated => {
+      if (!authenticated) {
+        throw new Error("Access denied");
+      }
+      // Show the page and continue with initialization
+      document.body.style.display = '';
+      initializePage();
+    });
+
+    function initializePage() {
     // Determine which config file to use based on environment
     const isLocalhost = window.location.hostname === 'localhost' || 
                         window.location.hostname === '127.0.0.1' ||
@@ -1810,6 +1887,7 @@
       });
     }
 
+    } // End of initializePage function
 
   </script>
 </body>
