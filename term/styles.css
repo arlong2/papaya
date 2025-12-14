@@ -1,0 +1,307 @@
+/*!
+ * Terminal 3000 - Retro CRT Terminal
+ */
+
+/* Fonts */
+@font-face {
+  font-family: monofont;
+  font-weight: normal;
+  font-style: normal;
+  src: url('fonts/monofonto.eot');
+  src: url('fonts/monofonto.eot?#iefix') format('embedded-opentype'),
+    url('fonts/monofonto.woff') format('woff'),
+    url('fonts/monofonto.ttf') format('truetype'),
+    url('fonts/monofonto.svg#monofonto') format('svg');
+}
+
+/* Layout */
+body,
+html {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  background-color: #000;
+  font-size: 14px;
+  font-family: sans-serif;
+  color: #fff;
+  display: flex;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+#info {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  padding: 0.5em;
+}
+
+/* CRT Monitor */
+#crt {
+  position: relative;
+  z-index: 10;
+  background: #7b8e78;
+  width: 80vw;
+  height: 60vw; /* 4:3 aspect ratio: height = width * 0.75 */
+  max-width: 1024px;
+  max-height: 768px; /* 4:3 aspect ratio: 1024 * 0.75 = 768 */
+  min-width: 320px;
+  min-height: 240px; /* 4:3 aspect ratio: 320 * 0.75 = 240 */
+  border-radius: 1em;
+  box-shadow: inset 0.25em 0.25em 2px rgba(255, 255, 255, 0.4), inset -0.25em -0.25em 2px rgba(0, 0, 0, 0.4);
+  user-select: none;
+  font-size: 18px;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000;
+}
+
+#screen {
+  position: relative;
+  z-index: 20;
+  width: calc(100% - 3em);
+  height: calc(100% - 3em);
+  margin-top: 1.5em;
+  margin-left: 1.5em;
+  background: #000;
+  border-radius: 1em;
+  overflow: hidden;
+  box-shadow: 0 0 1px 3px rgba(10, 10, 10, 0.7);
+}
+
+#screen::before {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  content: '';
+  z-index: 70;
+  box-shadow: inset 0 0 1em 0.5em rgba(255, 255, 255, 0.08);
+  border-radius: 1em;
+}
+
+#screen::after {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  content: '';
+  z-index: 60;
+  opacity: 0.1;
+  background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.2));
+}
+
+#wrapper {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+}
+
+#wrapper::before {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  content: '';
+  z-index: 31;
+  background: radial-gradient(ellipse at center, rgba(0, 30, 30, 0) 0%, rgba(0, 30, 30, 0.5) 100%);
+  pointer-events: none;
+}
+
+#wrapper::after {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  content: '';
+  z-index: 32;
+  opacity: 0.5;
+  background: radial-gradient(ellipse at center, rgba(0, 255, 119, 1) 0%, rgba(0, 255, 119, 0) 100%);
+  pointer-events: none;
+}
+
+#interlace {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 21;
+  opacity: 0.25;
+  background: linear-gradient(#888 50%, #000 50%);
+  background-size: 100% 4px;
+  background-repeat: repeat-y;
+}
+
+#envelope {
+  position: absolute;
+  left: 2em;
+  top: 2em;
+  right: 2em;
+  bottom: 2em;
+  z-index: 40;
+  border-radius: 0.5em;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+#scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1em;
+  opacity: 0;
+  background: linear-gradient(to bottom, transparent 0%, rgba(255, 250, 250, 1) 50%, rgba(100, 255, 100, 1) 50%, transparent 100%);
+  transition: opacity 0.1s ease;
+}
+
+#scanline.active {
+  opacity: 0.1;
+  animation: scanline 1.25s linear;
+}
+
+#terminal {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 50;
+}
+
+#terminal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 51;
+  pointer-events: none;
+  opacity: 0.15;
+  background: linear-gradient(transparent 50%, rgba(0, 0, 0, 0.8) 50%);
+  background-size: 100% 2px;
+  background-repeat: repeat-y;
+}
+
+#terminal textarea {
+  display: block;
+  background: transparent;
+  resize: none;
+  width: 100%;
+  height: 100%;
+  border: 0 none;
+  outline: 0 none;
+  box-sizing: border-box;
+  margin: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1em;
+  color: #18ff62;
+  text-shadow: 0 0 2px rgba(10, 255, 10, 0.8);
+  font-family: 'monofont';
+  font-size: inherit;
+  line-height: 1.25;
+  white-space: pre-wrap;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(24, 255, 98, 0.5) transparent;
+}
+
+#terminal textarea::-webkit-scrollbar {
+  width: 8px;
+}
+
+#terminal textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#terminal textarea::-webkit-scrollbar-thumb {
+  background: rgba(24, 255, 98, 0.3);
+  border-radius: 4px;
+}
+
+#terminal textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(24, 255, 98, 0.5);
+}
+
+/* Animations */
+@keyframes scanline {
+  0% {
+    top: 0;
+  }
+  100% {
+    top: 100%;
+  }
+}
+
+
+
+#attribution {
+  position: fixed;
+  bottom: 12px;
+  right: 16px;
+  z-index: 5;
+  font-size: 12px;
+  font-family: monospace;
+  opacity: 0.4;
+  transition: all 0.3s ease;
+}
+
+#attribution a {
+  color: #6d6d6d;
+  text-decoration: none;
+  letter-spacing: 0.5px;
+  transition: color 0.3s ease;
+}
+
+#attribution:hover {
+  opacity: 0.9;
+}
+
+#attribution:hover a {
+  color: #18ff62;
+  text-shadow: 0 0 2px rgba(10, 255, 10, 0.8);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  #crt {
+    width: 90vw;
+    height: 67.5vw; /* 4:3 aspect ratio: 90vw * 0.75 = 67.5vw */
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  #crt {
+    width: 95vw;
+    height: 71.25vw; /* 4:3 aspect ratio: 95vw * 0.75 = 71.25vw */
+    font-size: 12px;
+  }
+}
+
+/* Prevent terminal from being too tall on very short screens */
+@media (max-height: 600px) {
+  #crt {
+    width: 80vh; /* Use height as base when screen is very short */
+    height: 60vh; /* 4:3 aspect ratio: 80vh * 0.75 = 60vh */
+    font-size: 12px;
+  }
+}
+
+@media (max-height: 400px) {
+  #crt {
+    width: 90vh;
+    height: 67.5vh; /* 4:3 aspect ratio: 90vh * 0.75 = 67.5vh */
+    font-size: 10px;
+  }
+}

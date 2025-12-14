@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+  <head lang="en">
+
+    <title>papaya.terminal</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+    <link rel="stylesheet" href="styles.css" type="text/css" />
+    <script type="module" src="terminal.js"></script>
+    <script type="module">
+      import { terminal } from './terminal.js';
+      
+      // Random scanline controller
+      function initScanlineController() {
+        const scanline = document.getElementById('scanline');
+        
+        function triggerScanline() {
+          scanline.classList.add('active');
+          
+          // Remove the active class after animation completes
+          setTimeout(() => {
+            scanline.classList.remove('active');
+          }, 1250); // Match the animation duration
+          
+          // Schedule next scanline (15-30 seconds)
+          const nextInterval = Math.random() * 15000 + 15000; // 15-30 seconds in milliseconds
+          setTimeout(triggerScanline, nextInterval);
+        }
+        
+        // Start the first scanline after initial delay
+        const initialDelay = Math.random() * 15000 + 15000;
+        setTimeout(triggerScanline, initialDelay);
+      }
+      
+      // Initialize the terminal when the page loads
+      document.addEventListener('DOMContentLoaded', () => {
+        const term = terminal({
+          banner: `papaya.party interactive terminal`,
+          commands: {
+            help: () => `Available commands:
+  help       - Show this help message
+  clear      - Clear the terminal
+  date       - Show current date and time
+  echo       - Echo back your message
+  cat        - Display file contents
+  ls         - List available files
+  about      - About this terminal
+  exit       - Close terminal (just kidding!)`,
+            
+            clear: () => {
+              term.clear();
+              return '';
+            },
+            
+            date: () => new Date().toString(),
+            
+            echo: (...args) => {
+              // Regular echo functionality only
+              return args.join(' ') || '';
+            },
+            
+            cat: (...args) => {
+              const filename = args.join(' ');
+              
+              // Check if trying to display a file
+              if (filename === 'real.txt') {
+                return `================================================================================
+                              THE STORY OF MEL
+                               A Real Programmer
+================================================================================
+
+This is a story about a Real Programmer. The company I work for does
+systems programming, and we have a few Real Programmers working here.
+The story concerns a Real Programmer working on our Blackjack program
+for the PDP-8.
+
+--------------------------------------------------------------------------------
+
+Now, the PDP-8 was a simple machine. It had 4K of memory (if you were
+lucky), a paper-tape reader, and a Teletype. The Blackjack program was
+meant to run in a mere 4K, and include the dealer, the game logic, and
+a reasonably snappy interface.
+
+The Real Programmer was working on this program. He was having problems
+getting it to fit in 4K. Every time he finished one subroutine, he'd
+discover that he'd used up more memory than he had available for the
+rest of the program.
+
+--------------------------------------------------------------------------------
+
+The Real Programmer never used comments, his code was self-documenting.
+He never used structured programming constructs, they were for wimps who
+couldn't remember what they were doing. He never used a high-level
+language, they were for people who couldn't handle the machine.
+
+When the Real Programmer finished the Blackjack program, it was a work
+of art. The program was so tightly coded that every instruction was
+used for multiple purposes. He had no extra memory, no wasted cycles.
+
+--------------------------------------------------------------------------------
+
+But there was one small problem. The program had a bug. Sometimes, when
+you asked for a card, the program would deal you the same card twice.
+The Real Programmer knew about this bug, but he couldn't fix it without
+adding more code, and there was no more room.
+
+So the Real Programmer did what Real Programmers do. He documented the
+bug as a feature. "The program will occasionally deal duplicate cards.
+This simulates the experience of playing with a deck that hasn't been
+properly shuffled."
+
+                        The Real Programmer's name was Mel.
+
+                           And Mel was a Real Programmer.
+
+================================================================================
+                                  EPILOGUE
+================================================================================
+
+This story has been passed down through generations of programmers as
+an example of the old-school programming mentality, where memory was
+precious and every byte counted. It represents both the ingenuity and
+the stubbornness of early computer programmers who worked within
+extreme constraints.
+
+The story is often told to illustrate the difference between "clever"
+programming and maintainable programming, and serves as both a tribute
+to and a gentle critique of the programming practices of yesteryear.
+
+================================================================================`;
+              } else if (filename) {
+                return `cat: ${filename}: No such file or directory`;
+              } else {
+                return 'cat: missing file operand';
+              }
+            },
+            
+            ls: () => `Available files:
+  real.txt   - A classic programming story`,
+            
+            about: () => `Terminal 3000 - A retro CRT terminal emulator
+Created by papaya.party`,
+            
+            exit: () => 'Nice try! This terminal never exits. 😄'
+          }
+        });
+        
+        // Initialize the random scanline effect
+        initScanlineController();
+      });
+    </script>
+  </head>
+  <body>
+
+    <!-- Application markup -->
+    <div id="crt">
+      <div id="screen">
+        <div id="wrapper">
+          <div id="interlace"></div>
+          <div id="scanline"></div>
+          <div id="envelope">
+            <div id="terminal"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+
+    <div id="attribution">
+      <a href="https://github.com/andersevenrud/retro-css-shell-demo" target="_blank">original concept</a>
+    </div>
+
+  </body>
+</html>
