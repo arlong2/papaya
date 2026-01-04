@@ -79,14 +79,42 @@
       gap:10px;
       align-items:center;
     }
+    .search-container{
+      position:relative;
+      width:100%;
+    }
     .search{
       width:100%;
       background: rgba(15,22,35,.8);
       border:1px solid var(--border);
       color:var(--text);
       border-radius: 12px;
-      padding:10px 12px;
+      padding:10px 40px 10px 12px;
       outline:none;
+    }
+    .search-clear{
+      position:absolute;
+      right:8px;
+      top:50%;
+      transform:translateY(-50%);
+      background:none;
+      border:none;
+      color:var(--muted);
+      cursor:pointer;
+      padding:4px;
+      border-radius:6px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      opacity:0;
+      transition: opacity 0.2s ease, color 0.2s ease;
+    }
+    .search-clear:hover{
+      color:var(--text);
+      background:rgba(15,22,35,.6);
+    }
+    .search-clear.visible{
+      opacity:1;
     }
     .pill{
       border:1px solid var(--border);
@@ -111,7 +139,6 @@
       gap:8px;
       overflow:auto;
       height: calc(100vh - 170px);
-      padding-right:4px;
       /* Hide scrollbar */
       scrollbar-width: none; /* Firefox */
       -ms-overflow-style: none; /* Internet Explorer 10+ */
@@ -439,7 +466,15 @@
       </div>
 
       <div class="controls">
-        <input id="search" class="search" placeholder="Search movies…" aria-label="Search movies" />
+        <div class="search-container">
+          <input id="search" class="search" placeholder="Search movies…" aria-label="Search movies" />
+          <button id="clearSearch" class="search-clear" title="Clear search" aria-label="Clear search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
         <button id="toggleBonus" class="pill" aria-pressed="true" title="Show/hide bonus movies">Bonus</button>
       </div>
 
@@ -972,11 +1007,13 @@
     // highlight in list with more prominent selection border
     [...listEl.children].forEach(el => {
       if(el.dataset.id === id) {
-        el.style.borderColor = "rgba(122,162,255,.85)";
+        el.style.borderColor = "rgba(122,162,255,.9)";
+        el.style.borderWidth = "";
         el.style.background = "rgba(122,162,255,.15)";
-        el.style.boxShadow = "inset 0 0 0 2px rgba(122,162,255,.35)";
+        el.style.boxShadow = "inset 0 0 0 2px rgba(122,162,255,.7)";
       } else {
         el.style.borderColor = "";
+        el.style.borderWidth = "";
         el.style.background = "";
         el.style.boxShadow = "";
       }
@@ -1003,10 +1040,29 @@
   }
 
   // Events
+  const clearSearchEl = $("#clearSearch");
+  
+  function updateClearButton() {
+    if (searchEl.value.trim()) {
+      clearSearchEl.classList.add('visible');
+    } else {
+      clearSearchEl.classList.remove('visible');
+    }
+  }
+  
   searchEl.addEventListener("input", () => {
     query = searchEl.value;
+    updateClearButton();
     renderList();
-    });
+  });
+
+  clearSearchEl.addEventListener("click", () => {
+    searchEl.value = "";
+    query = "";
+    updateClearButton();
+    renderList();
+    searchEl.focus();
+  });
 
   toggleBonusEl.addEventListener("click", () => {
     showBonus = !showBonus;
@@ -1042,7 +1098,7 @@
       focusListItem(focusedIndex);
     } else if(e.key === "Enter" && focusedIndex >= 0){
       e.preventDefault();
-      selectMovie(movies[focusedIndex].id, true);
+      selectMovie(movies[focusedIndex].id, false);
     }
   });
 
