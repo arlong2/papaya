@@ -290,6 +290,21 @@
       background: rgba(250,50,10,.10);
       font-weight: 600;
     }
+    .chip.interlude-chip{
+      color: #8b5cf6;
+      background: rgba(139,92,246,.10);
+      font-weight: 600;
+    }
+    .chip.top10-chip{
+      color: #ffd700;
+      background: rgba(255,215,0,.10);
+      font-weight: 600;
+    }
+    .chip.bonus-chip{
+      color: #3b82f6;
+      background: rgba(59,130,246,.10);
+      font-weight: 600;
+    }
     .cardBody{
       padding:12px 14px 14px;
       display:grid;
@@ -543,6 +558,23 @@
       bonus:false
     },
     {
+      id:"oceansEleven",
+      rank: "I1",
+      title:"Ocean's Eleven",
+      poster:"https://m.media-amazon.com/images/M/MV5BYzVmYzVkMmUtOGRhMi00MTNmLThlMmUtZTljYjlkMjNkMjJkXkEyXkFqcGdeQXVyNDk3NzU2MTQ@._V1_SX300.jpg",
+      rtRating: 82,
+      what:[
+        "Stylish, clever, low-stress fun with movie-star charisma.",
+        "A perfect palate cleanser between heavier films."
+      ],
+      why:[
+        "Provides a breezy, entertaining break in the viewing experience."
+      ],
+      rt:"https://www.rottentomatoes.com/m/oceans_eleven",
+      bonus:false,
+      interlude:true
+    },
+    {
       id:"pulpfiction",
       rank: 3,
       title:"Pulp Fiction",
@@ -741,7 +773,7 @@
   const pageDescEl = $("#pageDesc");
 
   function visibleMoviesForGrid(){
-    return MOVIES.filter(m => (showBonus || !m.bonus))
+    return MOVIES.filter(m => m.interlude || (showBonus || !m.bonus))
       .sort((a, b) => {
         // Sort watched movies to the bottom
         const aWatched = watchedMovies.has(a.id);
@@ -847,7 +879,7 @@
 
       const sub = document.createElement("div");
       sub.className = "sub";
-      sub.textContent = m.bonus ? "Bonus movie" : "Main list";
+      sub.textContent = m.interlude ? "Interlude movie" : (m.bonus ? "Bonus movie" : "Main list");
 
       meta.appendChild(title);
       meta.appendChild(sub);
@@ -888,13 +920,13 @@
     left.className = "left";
 
     const h3 = document.createElement("h3");
-    h3.textContent = (m.bonus ? "" : (m.rank + ". ")) + m.title;
+    h3.textContent = m.rank + ". " + m.title;
 
     const chips = document.createElement("div");
     chips.className = "chips";
     const chipA = document.createElement("span");
-    chipA.className = "chip";
-    chipA.textContent = m.bonus ? "Bonus" : "Top 10";
+    chipA.className = m.interlude ? "chip interlude-chip" : (m.bonus ? "chip bonus-chip" : "chip top10-chip");
+    chipA.textContent = m.interlude ? "Interlude" : (m.bonus ? "Bonus" : "Top 10");
     const chipB = document.createElement("span");
     chipB.className = "chip rt-chip";
     chipB.innerHTML = `${m.rtRating}% <img src="https://papaya.party/img/tomatometer.png" width="12" height="12" style="margin-left: 2px; vertical-align: -1px;" alt="tomato">`;
