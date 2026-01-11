@@ -296,6 +296,29 @@
       background: rgba(59,130,246,.10);
       font-weight: 600;
     }
+    .stars{
+      display: inline-flex;
+      gap: 2px;
+      align-items: center;
+      margin-left: 8px;
+    }
+    .star{
+      color: #fbbf24;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      transition: color 0.15s ease, transform 0.1s ease;
+      user-select: none;
+    }
+    .star.empty{
+      color: rgba(251,191,36,.25);
+    }
+    .star:hover{
+      transform: scale(1.1);
+    }
+    .star.hover-active{
+      color: #fbbf24;
+    }
     .chip.interlude-chip{
       color: #8b5cf6;
       background: rgba(139,92,246,.10);
@@ -801,6 +824,17 @@
     console.warn('Failed to load watched movies from localStorage:', e);
   }
 
+  // Load user ratings from localStorage
+  let userRatings = new Map();
+  try {
+    const saved = localStorage.getItem('userRatings');
+    if (saved) {
+      userRatings = new Map(JSON.parse(saved));
+    }
+  } catch (e) {
+    console.warn('Failed to load user ratings from localStorage:', e);
+  }
+
   const $ = (sel) => document.querySelector(sel);
   const listEl = $("#list");
   const gridEl = $("#grid");
@@ -880,6 +914,40 @@
       renderList();
       renderGrid();
     }, wasWatched ? 0 : 1000); // Delay for collapse animation to mostly complete
+  }
+
+  function setUserRating(movieId, rating) {
+    if (rating === 0) {
+      userRatings.delete(movieId);
+    } else {
+      userRatings.set(movieId, rating);
+    }
+    
+    // Save to localStorage
+    try {
+      localStorage.setItem('userRatings', JSON.stringify([...userRatings]));
+    } catch (e) {
+      console.warn('Failed to save user ratings to localStorage:', e);
+    }
+    
+    // Update the star display for this movie
+    updateStarDisplay(movieId, rating);
+  }
+
+  function updateStarDisplay(movieId, rating) {
+    const card = document.getElementById("card-" + movieId);
+    if (!card) return;
+    
+    const stars = card.querySelectorAll('.star');
+    stars.forEach((star, index) => {
+      const starRating = index + 1;
+      star.classList.remove('hover-active');
+      if (starRating <= rating) {
+        star.classList.remove('empty');
+      } else {
+        star.classList.add('empty');
+      }
+    });
   }
 
   function renderList(){
@@ -972,9 +1040,69 @@
     const hours = Math.floor(m.runtime / 60);
     const minutes = m.runtime % 60;
     chipC.textContent = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+    
+    // Create star rating display
+    const stars = document.createElement("div");
+    stars.className = "stars";
+    const currentRating = userRatings.get(m.id) || 0;
+    
+    for (let i = 1; i <= 5; i++) {
+      const star = document.createElement("span");
+      star.className = i <= currentRating ? "star" : "star empty";
+      star.innerHTML = "★";
+      star.dataset.rating = i;
+      star.dataset.movieId = m.id;
+      
+      // Add click handler
+      star.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const rating = parseInt(star.dataset.rating);
+        const movieId = star.dataset.movieId;
+        
+        // If clicking the same star that's already the rating, clear the rating
+        const currentUserRating = userRatings.get(movieId) || 0;
+        const newRating = (currentUserRating === rating) ? 0 : rating;
+        
+        setUserRating(movieId, newRating);
+      });
+      
+      // Add hover effects
+      star.addEventListener("mouseenter", () => {
+        const rating = parseInt(star.dataset.rating);
+        const allStars = stars.querySelectorAll('.star');
+        allStars.forEach((s, index) => {
+          if (index < rating) {
+            s.classList.add('hover-active');
+            s.classList.remove('empty');
+          } else {
+            s.classList.remove('hover-active');
+            s.classList.add('empty');
+          }
+        });
+      });
+      
+      stars.appendChild(star);
+    }
+    
+    // Reset hover effects when leaving the stars container
+    stars.addEventListener("mouseleave", () => {
+      const currentUserRating = userRatings.get(m.id) || 0;
+      const allStars = stars.querySelectorAll('.star');
+      allStars.forEach((s, index) => {
+        s.classList.remove('hover-active');
+        if (index < currentUserRating) {
+          s.classList.remove('empty');
+        } else {
+          s.classList.add('empty');
+        }
+      });
+    });
+    
     chips.appendChild(chipA);
     chips.appendChild(chipB);
     chips.appendChild(chipC);
+    chips.appendChild(stars);
 
     left.appendChild(h3);
     left.appendChild(chips);
