@@ -296,6 +296,31 @@
       background: rgba(59,130,246,.10);
       font-weight: 600;
     }
+    .rating-chip{
+      color: #fbbf24;
+      border:none;
+      background: rgba(251,191,36,.15);
+      font-weight: 600;
+    }
+    .rating-capsule{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border: none;
+      border-radius: 999px;
+      background: transparent;
+      color: #fbbf24;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .rating-capsule .stars{
+      margin-left: 0;
+    }
+    .rating-number{
+      font-size: 12px;
+      line-height: 1;
+    }
     .stars{
       display: inline-flex;
       gap: 2px;
@@ -304,33 +329,23 @@
     }
     .star{
       position: relative;
-      color: #fbbf24;
+      color: rgba(251,191,36,.25);
       font-size: 14px;
       line-height: 1;
       cursor: pointer;
-      transition: color 0.15s ease, transform 0.1s ease;
+      transition: transform 0.1s ease;
       user-select: none;
-    }
-    .star.empty{
-      color: rgba(251,191,36,.25);
-    }
-    .star.half{
-      background: linear-gradient(90deg, #fbbf24 50%, rgba(251,191,36,.25) 50%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
     }
     .star:hover{
       transform: scale(1.1);
     }
-    .star.hover-active{
+    .star-fill{
+      position: absolute;
+      top: 0;
+      left: 0;
       color: #fbbf24;
-    }
-    .star.hover-half{
-      background: linear-gradient(90deg, #fbbf24 50%, rgba(251,191,36,.25) 50%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
+      overflow: hidden;
+      pointer-events: none;
     }
     .chip.interlude-chip{
       color: #8b5cf6;
@@ -929,6 +944,14 @@
     }, wasWatched ? 0 : 1000); // Delay for collapse animation to mostly complete
   }
 
+  function updateRatingNumber(numberElement, rating) {
+    if (rating > 0) {
+      numberElement.textContent = rating.toFixed(2);
+    } else {
+      numberElement.textContent = 'Rate';
+    }
+  }
+
   function setUserRating(movieId, rating) {
     if (rating === 0) {
       userRatings.delete(movieId);
@@ -945,6 +968,31 @@
     
     // Update the star display for this movie
     updateStarDisplay(movieId, rating);
+    
+    // Update the rating number
+    const card = document.getElementById("card-" + movieId);
+    if (card) {
+      const ratingNumber = card.querySelector('.rating-number');
+      if (ratingNumber) {
+        updateRatingNumber(ratingNumber, rating);
+      }
+    }
+  }
+
+  function setStarAppearance(star, starIndex, rating) {
+    const starFill = star.querySelector('.star-fill');
+    
+    if (starIndex <= Math.floor(rating)) {
+      // Full star
+      starFill.style.width = '100%';
+    } else if (starIndex === Math.ceil(rating) && rating > Math.floor(rating)) {
+      // Partial star - calculate percentage
+      const percentage = ((rating - Math.floor(rating)) * 100);
+      starFill.style.width = `${percentage}%`;
+    } else {
+      // Empty star
+      starFill.style.width = '0%';
+    }
   }
 
   function updateStarDisplay(movieId, rating) {
@@ -954,18 +1002,7 @@
     const stars = card.querySelectorAll('.star');
     stars.forEach((star, index) => {
       const starIndex = index + 1;
-      star.classList.remove('hover-active', 'hover-half', 'empty', 'half');
-      
-      if (starIndex <= Math.floor(rating)) {
-        // Full star
-        star.className = "star";
-      } else if (starIndex === Math.ceil(rating) && rating % 1 === 0.5) {
-        // Half star
-        star.className = "star half";
-      } else {
-        // Empty star
-        star.className = "star empty";
-      }
+      setStarAppearance(star, starIndex, rating);
     });
   }
 
@@ -1067,20 +1104,23 @@
     
     for (let i = 1; i <= 5; i++) {
       const star = document.createElement("span");
-      star.innerHTML = "★";
+      star.className = "star";
       star.dataset.starIndex = i;
       star.dataset.movieId = m.id;
       
-      // Set initial star appearance based on current rating
-      if (i <= Math.floor(currentRating)) {
-        star.className = "star";
-      } else if (i === Math.ceil(currentRating) && currentRating % 1 === 0.5) {
-        star.className = "star half";
-      } else {
-        star.className = "star empty";
-      }
+      // Create the base star (empty/background)
+      star.innerHTML = "★";
       
-      // Add click handler for half/full stars
+      // Create the fill overlay
+      const starFill = document.createElement("span");
+      starFill.className = "star-fill";
+      starFill.innerHTML = "★";
+      star.appendChild(starFill);
+      
+      // Set initial star appearance based on current rating
+      setStarAppearance(star, i, currentRating);
+      
+      // Add click handler for precise ratings
       star.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -1088,52 +1128,39 @@
         const rect = star.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
         const starWidth = rect.width;
-        const isLeftHalf = clickX < starWidth / 2;
+        const percentage = Math.max(0, Math.min(1, clickX / starWidth));
         
         const starIndex = parseInt(star.dataset.starIndex);
         const movieId = star.dataset.movieId;
         const currentUserRating = userRatings.get(movieId) || 0;
         
-        let newRating;
-        if (isLeftHalf) {
-          newRating = starIndex - 0.5;
+        // Calculate precise rating: (starIndex - 1) + percentage
+        // Round to 2 decimal places for storage
+        const newRating = Math.round(((starIndex - 1) + percentage) * 100) / 100;
+        
+        // If clicking very close to the current rating (within 0.05), clear it
+        if (Math.abs(currentUserRating - newRating) < 0.05) {
+          setUserRating(movieId, 0);
         } else {
-          newRating = starIndex;
+          setUserRating(movieId, newRating);
         }
-        
-        // If clicking the same rating, clear it
-        if (currentUserRating === newRating) {
-          newRating = 0;
-        }
-        
-        setUserRating(movieId, newRating);
       });
       
-      // Add hover effects for half/full stars
+      // Add hover effects for precise preview
       star.addEventListener("mousemove", (e) => {
         const rect = star.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const starWidth = rect.width;
-        const isLeftHalf = mouseX < starWidth / 2;
+        const percentage = Math.max(0, Math.min(1, mouseX / starWidth));
         
         const starIndex = parseInt(star.dataset.starIndex);
-        const previewRating = isLeftHalf ? starIndex - 0.5 : starIndex;
+        const previewRating = (starIndex - 1) + percentage;
         
         // Update all stars for hover preview
         const allStars = stars.querySelectorAll('.star');
         allStars.forEach((s, index) => {
           const sIndex = index + 1;
-          s.classList.remove('hover-active', 'hover-half', 'empty', 'half');
-          
-          if (sIndex < previewRating) {
-            s.classList.add('hover-active');
-          } else if (sIndex === Math.ceil(previewRating) && previewRating % 1 === 0.5) {
-            s.classList.add('hover-half');
-          } else if (sIndex <= previewRating) {
-            s.classList.add('hover-active');
-          } else {
-            s.classList.add('empty');
-          }
+          setStarAppearance(s, sIndex, previewRating);
         });
       });
       
@@ -1146,10 +1173,24 @@
       updateStarDisplay(m.id, currentUserRating);
     });
     
+    // Create combined rating capsule with stars and number
+    const ratingCapsule = document.createElement("div");
+    ratingCapsule.className = "rating-capsule";
+    ratingCapsule.dataset.movieId = m.id;
+    
+    // Move stars into the capsule
+    ratingCapsule.appendChild(stars);
+    
+    // Create rating number display
+    const ratingNumber = document.createElement("span");
+    ratingNumber.className = "rating-number";
+    updateRatingNumber(ratingNumber, currentRating);
+    ratingCapsule.appendChild(ratingNumber);
+    
     chips.appendChild(chipA);
     chips.appendChild(chipB);
     chips.appendChild(chipC);
-    chips.appendChild(stars);
+    chips.appendChild(ratingCapsule);
 
     left.appendChild(h3);
     left.appendChild(chips);
