@@ -303,6 +303,7 @@
       margin-left: 8px;
     }
     .star{
+      position: relative;
       color: #fbbf24;
       font-size: 14px;
       line-height: 1;
@@ -313,11 +314,23 @@
     .star.empty{
       color: rgba(251,191,36,.25);
     }
+    .star.half{
+      background: linear-gradient(90deg, #fbbf24 50%, rgba(251,191,36,.25) 50%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
     .star:hover{
       transform: scale(1.1);
     }
     .star.hover-active{
       color: #fbbf24;
+    }
+    .star.hover-half{
+      background: linear-gradient(90deg, #fbbf24 50%, rgba(251,191,36,.25) 50%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
     .chip.interlude-chip{
       color: #8b5cf6;
@@ -940,12 +953,18 @@
     
     const stars = card.querySelectorAll('.star');
     stars.forEach((star, index) => {
-      const starRating = index + 1;
-      star.classList.remove('hover-active');
-      if (starRating <= rating) {
-        star.classList.remove('empty');
+      const starIndex = index + 1;
+      star.classList.remove('hover-active', 'hover-half', 'empty', 'half');
+      
+      if (starIndex <= Math.floor(rating)) {
+        // Full star
+        star.className = "star";
+      } else if (starIndex === Math.ceil(rating) && rating % 1 === 0.5) {
+        // Half star
+        star.className = "star half";
       } else {
-        star.classList.add('empty');
+        // Empty star
+        star.className = "star empty";
       }
     });
   }
@@ -1048,35 +1067,71 @@
     
     for (let i = 1; i <= 5; i++) {
       const star = document.createElement("span");
-      star.className = i <= currentRating ? "star" : "star empty";
       star.innerHTML = "★";
-      star.dataset.rating = i;
+      star.dataset.starIndex = i;
       star.dataset.movieId = m.id;
       
-      // Add click handler
+      // Set initial star appearance based on current rating
+      if (i <= Math.floor(currentRating)) {
+        star.className = "star";
+      } else if (i === Math.ceil(currentRating) && currentRating % 1 === 0.5) {
+        star.className = "star half";
+      } else {
+        star.className = "star empty";
+      }
+      
+      // Add click handler for half/full stars
       star.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const rating = parseInt(star.dataset.rating);
-        const movieId = star.dataset.movieId;
         
-        // If clicking the same star that's already the rating, clear the rating
+        const rect = star.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const starWidth = rect.width;
+        const isLeftHalf = clickX < starWidth / 2;
+        
+        const starIndex = parseInt(star.dataset.starIndex);
+        const movieId = star.dataset.movieId;
         const currentUserRating = userRatings.get(movieId) || 0;
-        const newRating = (currentUserRating === rating) ? 0 : rating;
+        
+        let newRating;
+        if (isLeftHalf) {
+          newRating = starIndex - 0.5;
+        } else {
+          newRating = starIndex;
+        }
+        
+        // If clicking the same rating, clear it
+        if (currentUserRating === newRating) {
+          newRating = 0;
+        }
         
         setUserRating(movieId, newRating);
       });
       
-      // Add hover effects
-      star.addEventListener("mouseenter", () => {
-        const rating = parseInt(star.dataset.rating);
+      // Add hover effects for half/full stars
+      star.addEventListener("mousemove", (e) => {
+        const rect = star.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const starWidth = rect.width;
+        const isLeftHalf = mouseX < starWidth / 2;
+        
+        const starIndex = parseInt(star.dataset.starIndex);
+        const previewRating = isLeftHalf ? starIndex - 0.5 : starIndex;
+        
+        // Update all stars for hover preview
         const allStars = stars.querySelectorAll('.star');
         allStars.forEach((s, index) => {
-          if (index < rating) {
+          const sIndex = index + 1;
+          s.classList.remove('hover-active', 'hover-half', 'empty', 'half');
+          
+          if (sIndex < previewRating) {
             s.classList.add('hover-active');
-            s.classList.remove('empty');
+          } else if (sIndex === Math.ceil(previewRating) && previewRating % 1 === 0.5) {
+            s.classList.add('hover-half');
+          } else if (sIndex <= previewRating) {
+            s.classList.add('hover-active');
           } else {
-            s.classList.remove('hover-active');
             s.classList.add('empty');
           }
         });
@@ -1088,15 +1143,7 @@
     // Reset hover effects when leaving the stars container
     stars.addEventListener("mouseleave", () => {
       const currentUserRating = userRatings.get(m.id) || 0;
-      const allStars = stars.querySelectorAll('.star');
-      allStars.forEach((s, index) => {
-        s.classList.remove('hover-active');
-        if (index < currentUserRating) {
-          s.classList.remove('empty');
-        } else {
-          s.classList.add('empty');
-        }
-      });
+      updateStarDisplay(m.id, currentUserRating);
     });
     
     chips.appendChild(chipA);
