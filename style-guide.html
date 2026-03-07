@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>papaya.party — Style Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Exo:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      /* ── Core Palette ── */
+      --pink:         #f9dadc;
+      --orange-deep:  #e06a1a;
+      --orange-mid:   #f09230;
+      --yellow:       #f5c030;
+      --black:        #111111;
+      --white:        #ffffff;
+
+      /* ── Functional ── */
+      --text:         var(--black);
+      --bg:           var(--pink);
+      --border:       var(--black);
+      --radius:       0.75rem;
+
+      /* ── Type ── */
+      --font-display: 'Exo', sans-serif;
+      --font-mono:    'Share Tech Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-display);
+      background: var(--bg);
+      color: var(--text);
+      padding: 60px 40px 100px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* ── Section ── */
+    section { margin-bottom: 72px; }
+
+    .label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      opacity: 0.45;
+      margin-bottom: 20px;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 80px;
+      border-bottom: 2px solid var(--black);
+      padding-bottom: 32px;
+    }
+
+    header img { width: 64px; height: 64px; }
+
+    header h1 {
+      font-size: 36px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    header span {
+      display: block;
+      font-size: 13px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      opacity: 0.45;
+      margin-top: 6px;
+    }
+
+    /* ── Color Swatches ── */
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 16px;
+    }
+
+    .swatch {
+      border: 2px solid var(--black);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .swatch-color {
+      height: 90px;
+    }
+
+    .swatch-info {
+      padding: 10px 12px;
+      background: var(--white);
+    }
+
+    .swatch-name {
+      font-size: 13px;
+      font-weight: 700;
+      display: block;
+    }
+
+    .swatch-hex {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      opacity: 0.55;
+      margin-top: 2px;
+      display: block;
+    }
+
+    .swatch-ios {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      opacity: 0.4;
+      margin-top: 4px;
+      display: block;
+      line-height: 1.5;
+    }
+
+    /* ── Typography ── */
+    .type-samples { display: flex; flex-direction: column; gap: 20px; }
+
+    .type-row {
+      display: flex;
+      align-items: baseline;
+      gap: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .type-meta {
+      width: 140px;
+      flex-shrink: 0;
+      font-size: 11px;
+      opacity: 0.45;
+      line-height: 1.6;
+    }
+
+    .type-meta strong { display: block; font-size: 12px; opacity: 1; }
+
+    /* ── Buttons ── */
+    .buttons { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+
+    .btn {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 500;
+      padding: 14px 28px;
+      border: 2px solid var(--black);
+      border-radius: var(--radius);
+      background: var(--pink);
+      color: var(--black);
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn:hover { background: var(--black); color: var(--white); }
+
+    .btn-orange {
+      background: var(--orange-mid);
+      border-color: var(--black);
+      color: var(--white);
+    }
+
+    .btn-orange:hover { background: var(--orange-deep); color: var(--white); }
+
+    .btn-yellow {
+      background: var(--yellow);
+      border-color: var(--black);
+      color: var(--black);
+    }
+
+    .btn-yellow:hover { background: var(--orange-mid); color: var(--white); }
+
+    /* ── Motion ── */
+    .motion-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .motion-card {
+      border: 2px solid var(--black);
+      border-radius: var(--radius);
+      background: var(--white);
+      padding: 20px;
+    }
+
+    .motion-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+
+    .motion-card p {
+      font-size: 13px;
+      line-height: 1.6;
+      opacity: 0.6;
+    }
+
+    .motion-card code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      display: block;
+      margin-top: 10px;
+      padding: 8px 10px;
+      background: var(--pink);
+      border-radius: 6px;
+      opacity: 0.8;
+    }
+
+    /* ── Demo: falling papaya ── */
+    .motion-demo {
+      position: relative;
+      border: 2px solid var(--black);
+      border-radius: var(--radius);
+      background: var(--white);
+      height: 140px;
+      overflow: hidden;
+    }
+
+    .falling-fruit {
+      position: absolute;
+      font-size: 40px;
+      animation: fall 3s linear infinite;
+    }
+
+    .falling-fruit:nth-child(1) { left: 15%; animation-duration: 3.5s; animation-delay: 0s; }
+    .falling-fruit:nth-child(2) { left: 38%; animation-duration: 2.8s; animation-delay: -1s; }
+    .falling-fruit:nth-child(3) { left: 62%; animation-duration: 3.2s; animation-delay: -0.5s; }
+    .falling-fruit:nth-child(4) { left: 82%; animation-duration: 2.5s; animation-delay: -2s; }
+
+    @keyframes fall {
+      0%   { top: -60px; transform: rotate(0deg); }
+      100% { top: 160px; transform: rotate(360deg); }
+    }
+
+    /* ── CSS Variables Block ── */
+    .code-block {
+      background: var(--black);
+      color: #f9dadc;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.8;
+      padding: 28px 32px;
+      border-radius: var(--radius);
+      overflow-x: auto;
+    }
+
+    .code-block .comment { opacity: 0.35; }
+    .code-block .prop { color: var(--orange-mid); }
+    .code-block .val { color: var(--yellow); }
+
+    /* ── Illustration style ── */
+    .illustration-notes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .illus-note {
+      border: 2px solid var(--black);
+      border-radius: var(--radius);
+      background: var(--white);
+      padding: 18px 20px;
+    }
+
+    .illus-note h3 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .illus-note p  { font-size: 13px; line-height: 1.6; opacity: 0.6; }
+
+    @media (max-width: 600px) {
+      body { padding: 32px 20px 72px; }
+      .motion-cards, .illustration-notes { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <img src="img/papaya-1.png" alt="papaya" />
+    <div>
+      <h1>papaya.party</h1>
+      <span>Style Guide</span>
+    </div>
+  </header>
+
+
+  <!-- ── Color Palette ── -->
+  <section>
+    <p class="label">Color Palette</p>
+    <div class="swatches">
+
+      <div class="swatch">
+        <div class="swatch-color" style="background:#f9dadc;"></div>
+        <div class="swatch-info">
+          <strong class="swatch-name">Party Pink</strong>
+          <span class="swatch-hex">#f9dadc</span>
+          <span class="swatch-ios">Color(hex: 0xF9DADC)<br>r:0.98 g:0.85 b:0.86</span>
+        </div>
+      </div>
+
+      <div class="swatch">
+        <div class="swatch-color" style="background:#e06a1a;"></div>
+        <div class="swatch-info">
+          <strong class="swatch-name">Papaya Skin</strong>
+          <span class="swatch-hex">#e06a1a</span>
+          <span class="swatch-ios">Color(hex: 0xE06A1A)<br>r:0.88 g:0.42 b:0.10</span>
+        </div>
+      </div>
+
+      <div class="swatch">
+        <div class="swatch-color" style="background:#f09230;"></div>
+        <div class="swatch-info">
+          <strong class="swatch-name">Papaya Flesh</strong>
+          <span class="swatch-hex">#f09230</span>
+          <span class="swatch-ios">Color(hex: 0xF09230)<br>r:0.94 g:0.57 b:0.19</span>
+        </div>
+      </div>
+
+      <div class="swatch">
+        <div class="swatch-color" style="background:#f5c030;"></div>
+        <div class="swatch-info">
+          <strong class="swatch-name">Papaya Gold</strong>
+          <span class="swatch-hex">#f5c030</span>
+          <span class="swatch-ios">Color(hex: 0xF5C030)<br>r:0.96 g:0.75 b:0.19</span>
+        </div>
+      </div>
+
+      <div class="swatch">
+        <div class="swatch-color" style="background:#111111;"></div>
+        <div class="swatch-info">
+          <strong class="swatch-name">Seed Black</strong>
+          <span class="swatch-hex">#111111</span>
+          <span class="swatch-ios">Color(hex: 0x111111)<br>.primary / .black</span>
+        </div>
+      </div>
+
+      <div class="swatch">
+        <div class="swatch-color" style="background:#ffffff; border-top: 1px solid #eee;"></div>
+        <div class="swatch-info">
+          <strong class="swatch-name">White</strong>
+          <span class="swatch-hex">#ffffff</span>
+          <span class="swatch-ios">Color.white</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ── Typography ── -->
+  <section>
+    <p class="label">Typography</p>
+    <div class="type-samples">
+
+      <div class="type-row">
+        <div class="type-meta">
+          <strong>Display / Bold</strong>
+          Exo 700<br>
+          Google Fonts
+        </div>
+        <div style="font-family:'Exo',sans-serif; font-weight:700; font-size:48px; line-height:1;">papaya.party 🎉</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <strong>Body / Regular</strong>
+          Exo 400<br>
+          Google Fonts
+        </div>
+        <div style="font-family:'Exo',sans-serif; font-weight:400; font-size:18px; line-height:1.6;">
+          Join the party. Flat, bold, and a little playful — every element with just enough energy.
+        </div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <strong>Monospace</strong>
+          Share Tech Mono<br>
+          Typewriter / code
+        </div>
+        <div style="font-family:'Share Tech Mono',monospace; font-size:18px; line-height:1.6; opacity:0.75;">
+          #f9dadc &nbsp;·&nbsp; --orange-mid &nbsp;·&nbsp; var(--radius)
+        </div>
+      </div>
+
+      <div class="type-row" style="border-bottom:none;">
+        <div class="type-meta">
+          <strong>Sizing Scale</strong>
+        </div>
+        <div style="font-family:'Exo',sans-serif; line-height:2;">
+          <span style="font-size:48px; font-weight:700; display:block;">48px — Hero</span>
+          <span style="font-size:32px; font-weight:700; display:block;">32px — Heading</span>
+          <span style="font-size:20px; display:block;">20px — Subhead</span>
+          <span style="font-size:16px; display:block;">16px — Body</span>
+          <span style="font-size:13px; display:block; opacity:0.55;">13px — Caption / Label</span>
+          <span style="font-size:11px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; display:block; opacity:0.4;">11px — Eyebrow</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ── Components ── -->
+  <section>
+    <p class="label">Buttons &amp; Controls</p>
+    <div class="buttons" style="margin-bottom:24px;">
+      <button class="btn">join the party</button>
+      <button class="btn btn-orange">explore</button>
+      <button class="btn btn-yellow">suggest a place</button>
+    </div>
+    <p style="font-size:13px; opacity:0.5; line-height:1.7;">
+      All buttons share <strong>border-radius: 0.75rem</strong>, a <strong>2px solid black</strong> border, and a
+      <strong>0.3–0.4s ease</strong> color transition on hover. Background stays in palette on rest; shifts to black or deeper orange on hover.
+    </p>
+  </section>
+
+
+  <!-- ── Motion ── -->
+  <section>
+    <p class="label">Motion &amp; Animation</p>
+
+    <div class="motion-demo" style="margin-bottom:16px;">
+      <span class="falling-fruit">🍈</span>
+      <span class="falling-fruit">🍊</span>
+      <span class="falling-fruit">🍈</span>
+      <span class="falling-fruit">🍊</span>
+    </div>
+
+    <div class="motion-cards">
+
+      <div class="motion-card">
+        <h3>Falling Papayas</h3>
+        <p>Images fall from off-screen top, spinning a full 360° as they drop. Each instance uses a unique duration (12–45s) and start delay to feel organic.</p>
+        <code>animation: fall 25s linear infinite;</code>
+      </div>
+
+      <div class="motion-card">
+        <h3>Typewriter Effect</h3>
+        <p>Text reveals via a CSS <code>steps()</code> width animation with a blinking right border as the cursor. Click to replay — achieved by removing and re-adding the class.</p>
+        <code>animation: type 1.5s steps(16);</code>
+      </div>
+
+      <div class="motion-card">
+        <h3>Fade In</h3>
+        <p>Elements enter with a 3s fade that holds at 0 opacity until the 50% mark, then resolves to fully visible — a soft, delayed reveal.</p>
+        <code>50% { opacity: 0 } 100% { opacity: 1 }</code>
+      </div>
+
+      <div class="motion-card">
+        <h3>Physics / Verlet</h3>
+        <p>The plant-life canvas uses Verlet integration: gravity 0.01, friction 0.999, with a random breeze impulse every 100–200 frames.</p>
+        <code>gravity = 0.01 · friction = 0.999</code>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ── Illustration Style ── -->
+  <section>
+    <p class="label">Illustration Style</p>
+    <div class="illustration-notes">
+
+      <div class="illus-note">
+        <h3>Flat + Bold Outline</h3>
+        <p>All illustrations use solid fills with a heavy black outline — a sticker or cartoon aesthetic. No gradients, no shadows inside the art.</p>
+      </div>
+
+      <div class="illus-note">
+        <h3>3-Layer Depth</h3>
+        <p>Each papaya cross-section uses three concentric fills: Skin → Flesh → Gold center. This is the main visual metaphor of the brand.</p>
+      </div>
+
+      <div class="illus-note">
+        <h3>Energetic & Playful</h3>
+        <p>Shapes are slightly irregular and organic — not perfectly symmetrical. Leans into a hand-drawn, high-energy party vibe.</p>
+      </div>
+
+      <div class="illus-note">
+        <h3>Seed Dots</h3>
+        <p>Black seed dots inside the fruit are a recurring detail motif. Can be used as texture, pattern, or decorative punctuation in UI.</p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ── CSS Variables ── -->
+  <section>
+    <p class="label">CSS Variables — Drop-In Reference</p>
+    <div class="code-block"><span class="comment">/* papaya.party design tokens */</span>
+:root {
+  <span class="comment">/* Colors */</span>
+  <span class="prop">--pink</span>:          <span class="val">#f9dadc</span>;   <span class="comment">/* brand background */</span>
+  <span class="prop">--orange-deep</span>:   <span class="val">#e06a1a</span>;   <span class="comment">/* papaya skin */</span>
+  <span class="prop">--orange-mid</span>:    <span class="val">#f09230</span>;   <span class="comment">/* papaya flesh */</span>
+  <span class="prop">--yellow</span>:        <span class="val">#f5c030</span>;   <span class="comment">/* papaya gold center */</span>
+  <span class="prop">--black</span>:         <span class="val">#111111</span>;   <span class="comment">/* text, borders, outlines */</span>
+  <span class="prop">--white</span>:         <span class="val">#ffffff</span>;
+
+  <span class="comment">/* Typography */</span>
+  <span class="prop">--font-display</span>:  <span class="val">'Exo', sans-serif</span>;
+  <span class="prop">--font-mono</span>:     <span class="val">'Share Tech Mono', monospace</span>;
+
+  <span class="comment">/* Shape */</span>
+  <span class="prop">--radius</span>:        <span class="val">0.75rem</span>;
+  <span class="prop">--border</span>:        <span class="val">2px solid #111111</span>;
+
+  <span class="comment">/* Motion */</span>
+  <span class="prop">--transition</span>:    <span class="val">0.3s ease</span>;
+}</div>
+  </section>
+
+
+  <!-- ── iOS / SwiftUI ── -->
+  <section>
+    <p class="label">iOS / SwiftUI Color Extensions</p>
+    <div class="code-block"><span class="comment">// papaya.party palette for SwiftUI</span>
+extension Color {
+    <span class="prop">static let ppPink</span>       = <span class="val">Color(red: 0.976, green: 0.855, blue: 0.863)</span>
+    <span class="prop">static let ppOrangeDeep</span> = <span class="val">Color(red: 0.878, green: 0.416, blue: 0.102)</span>
+    <span class="prop">static let ppOrangeMid</span>  = <span class="val">Color(red: 0.941, green: 0.573, blue: 0.188)</span>
+    <span class="prop">static let ppYellow</span>     = <span class="val">Color(red: 0.961, green: 0.753, bold: 0.188)</span>
+    <span class="prop">static let ppBlack</span>      = <span class="val">Color(red: 0.067, green: 0.067, blue: 0.067)</span>
+}
+
+<span class="comment">// Usage</span>
+<span class="prop">Text</span>(<span class="val">"papaya.party 🎉"</span>)
+    .font(.custom(<span class="val">"Exo-Bold"</span>, size: 36))
+    .foregroundColor(.ppBlack)
+    .background(Color.ppPink)</div>
+  </section>
+
+</body>
+</html>
