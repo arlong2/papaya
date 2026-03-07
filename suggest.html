@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Suggest a Place - Seattle Restaurant Guide</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+  <style>
+    :root {
+      --accent: #57a3b1;
+      --accent-light: #8fcad3;
+      --accent-dark: #2b6d78;
+
+      --page-bg: #f4f5f7;
+      --card-bg: #ffffff;
+      --card-border: #e1e5ea;
+
+      --text-main: #111827;
+      --text-muted: #6b7280;
+      --text-softer: #9ca3af;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+        "SF Pro Text", "Segoe UI", sans-serif;
+      color: var(--text-main);
+      background: #ffffff;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ====== NAV BAR ====== */
+    #top-nav {
+      width: 100%;
+      height: 64px;
+      background: #ffffff;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 14px;
+      z-index: 9999;
+      flex-shrink: 0;
+    }
+
+    #top-nav .nav-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: url("http://papaya.party/img/sea-5.png") center/100% no-repeat,
+        var(--accent);
+    }
+
+    #top-nav .nav-textgroup {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    #top-nav .nav-title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: var(--text-main);
+      text-decoration: none;
+    }
+
+    #top-nav .nav-title:hover {
+      color: var(--accent);
+    }
+
+    #top-nav .nav-subtitle {
+      font-size: 11px;
+      color: var(--text-softer);
+      margin-top: 2px;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    #top-nav .nav-about {
+      font-size: 13px;
+      color: var(--text-main);
+      font-weight: 500;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: background 0.2s ease;
+    }
+
+    #top-nav .nav-about:first-of-type {
+      margin-left: auto;
+    }
+
+    #top-nav .nav-about:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    #top-nav .nav-edition {
+      font-size: 11px;
+      color: var(--text-softer);
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      margin-left: 12px;
+    }
+
+    /* ====== CONTENT ====== */
+    .content {
+      flex: 1;
+      max-width: 600px;
+      width: 100%;
+      padding: 60px 24px;
+      margin: 0 auto;
+    }
+
+    .content h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin: 0 0 12px 0;
+      color: var(--text-main);
+    }
+
+    .content .subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin: 0 0 32px 0;
+      line-height: 1.6;
+    }
+
+    /* ====== FORM ====== */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--text-main);
+    }
+
+    input[type="text"],
+    input[type="email"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 2px solid var(--card-border);
+      background: var(--card-bg);
+      color: var(--text-main);
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.2s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    select {
+      cursor: pointer;
+    }
+
+    .optional {
+      font-size: 13px;
+      color: var(--text-softer);
+      font-weight: 400;
+      margin-left: 4px;
+    }
+
+    .recaptcha-wrapper {
+      margin: 24px 0;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: none;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .submit-btn:hover {
+      background: var(--accent-dark);
+    }
+
+    .submit-btn:disabled {
+      background: var(--text-softer);
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 768px) {
+      .content {
+        padding: 40px 24px;
+      }
+
+      .form-row {
+        flex-direction: column;
+        gap: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- TOP NAV BAR -->
+  <div id="top-nav">
+    <div class="nav-logo"></div>
+    <div class="nav-textgroup">
+      <a href="seattle.html" class="nav-title">Seattle Restaurant Guide</a>
+      <div class="nav-subtitle">Support local · follow the knot</div>
+    </div>
+    <a href="about.html" class="nav-about">About</a>
+    <a href="seattle.html" class="nav-about">Guide</a>
+    <a href="suggest.html" class="nav-about">Suggest</a>
+    <div class="nav-edition">Winter 2025 edition</div>
+  </div>
+
+  <div class="content">
+    <h1>Suggest a Place</h1>
+    <p class="subtitle">
+      Know a restaurant, bar, or shop that deserves to be on our guide? Share your recommendation with us.
+    </p>
+
+    <form id="suggest-form">
+      <div class="form-group">
+        <label for="place-name">Place Name</label>
+        <input type="text" id="place-name" name="place-name" required />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="place-type">Type</label>
+          <select id="place-type" name="place-type" required>
+            <option value="">Select type</option>
+            <option value="restaurant">Restaurant</option>
+            <option value="bar">Bar</option>
+            <option value="shop">Shop</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="stars">Stars</label>
+          <select id="stars" name="stars" required>
+            <option value="">Select</option>
+            <option value="1">1 Star</option>
+            <option value="2">2 Stars</option>
+            <option value="3">3 Stars</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="reason">Why do you recommend this place?</label>
+        <textarea id="reason" name="reason" required placeholder="Tell us what makes this place special..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email <span class="optional">(optional)</span></label>
+        <input type="email" id="email" name="email" placeholder="your@email.com" />
+      </div>
+
+      <div class="recaptcha-wrapper">
+        <div class="g-recaptcha" data-sitekey="your-site-key-here"></div>
+      </div>
+
+      <button type="submit" class="submit-btn">Submit Suggestion</button>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('suggest-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Get form data
+      var formData = {
+        placeName: document.getElementById('place-name').value,
+        placeType: document.getElementById('place-type').value,
+        stars: document.getElementById('stars').value,
+        reason: document.getElementById('reason').value,
+        email: document.getElementById('email').value
+      };
+
+      // In a real implementation, you would send this to a server
+      console.log('Form submitted:', formData);
+      
+      // Show success message
+      alert('Thank you for your suggestion! We\'ll review it for our next update.');
+      
+      // Reset form
+      this.reset();
+    });
+  </script>
+</body>
+</html>

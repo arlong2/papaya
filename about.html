@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About - Seattle Restaurant Guide</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    :root {
+      --accent: #57a3b1;
+      --accent-light: #8fcad3;
+      --accent-dark: #2b6d78;
+
+      --page-bg: #f4f5f7;
+      --card-bg: #ffffff;
+      --card-border: #e1e5ea;
+
+      --text-main: #111827;
+      --text-muted: #6b7280;
+      --text-softer: #9ca3af;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+        "SF Pro Text", "Segoe UI", sans-serif;
+      color: var(--text-main);
+      background: #ffffff;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ====== NAV BAR ====== */
+    #top-nav {
+      width: 100%;
+      height: 64px;
+      background: #ffffff;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 14px;
+      z-index: 9999;
+      flex-shrink: 0;
+    }
+
+    #top-nav .nav-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: url("http://papaya.party/img/sea-5.png") center/100% no-repeat,
+        var(--accent);
+    }
+
+    #top-nav .nav-textgroup {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    #top-nav .nav-title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: var(--text-main);
+      text-decoration: none;
+    }
+
+    #top-nav .nav-title:hover {
+      color: var(--accent);
+    }
+
+    #top-nav .nav-subtitle {
+      font-size: 11px;
+      color: var(--text-softer);
+      margin-top: 2px;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    #top-nav .nav-about {
+      font-size: 13px;
+      color: var(--text-main);
+      font-weight: 500;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: background 0.2s ease;
+    }
+
+    #top-nav .nav-about:first-of-type {
+      margin-left: auto;
+    }
+
+    #top-nav .nav-about:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    #top-nav .nav-edition {
+      font-size: 11px;
+      color: var(--text-softer);
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      margin-left: 12px;
+    }
+
+    /* ====== CONTENT ====== */
+    .content {
+      flex: 1;
+      max-width: 650px;
+      width: 100%;
+      padding: 80px 60px 60px 60px;
+    }
+
+    .content h1 {
+      font-size: 28px;
+      font-weight: 400;
+      margin: 0 0 48px 0;
+      color: var(--text-main);
+      letter-spacing: 0.02em;
+    }
+
+    .content p {
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--text-main);
+      margin: 0 0 32px 0;
+      text-align: justify;
+      font-weight: 400;
+    }
+
+    .content p:last-child {
+      margin-bottom: 0;
+    }
+
+    @media (max-width: 768px) {
+      .content {
+        padding: 40px 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- TOP NAV BAR -->
+  <div id="top-nav">
+    <div class="nav-logo"></div>
+    <div class="nav-textgroup">
+      <a href="seattle.html" class="nav-title">Seattle Restaurant Guide</a>
+      <div class="nav-subtitle">Support local · follow the knot</div>
+    </div>
+    <a href="about.html" class="nav-about">About</a>
+    <a href="seattle.html" class="nav-about">Guide</a>
+    <a href="suggest.html" class="nav-about">Suggest</a>
+    <div class="nav-edition">Winter 2025 edition</div>
+  </div>
+
+  <div class="content">
+    <h1>About This Guide</h1>
+    
+    <p>
+      Welcome to the Seattle Restaurant Guide, a curated collection of the city's most exceptional dining experiences. This guide celebrates the Pacific Northwest's vibrant culinary scene, from intimate tasting-menu destinations to beloved neighborhood gems. Each restaurant has been carefully selected for its commitment to quality, creativity, and the unique character it brings to Seattle's diverse food landscape.
+    </p>
+
+    <p>
+      Our star system reflects the overall dining experience, considering not just the food but also service, ambiance, and value. Whether you're seeking a special occasion destination or a reliable neighborhood favorite, this guide aims to help you discover the restaurants that make Seattle one of America's most exciting food cities. We update this guide seasonally to reflect the ever-evolving nature of our local dining scene.
+    </p>
+  </div>
+</body>
+</html>

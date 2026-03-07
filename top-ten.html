@@ -321,6 +321,38 @@
       font-size: 12px;
       line-height: 1;
     }
+    .mode-toggle{
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      background: rgba(15,22,35,.9);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      z-index: 9999;
+      pointer-events: auto;
+    }
+    .mode-option{
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--muted);
+      user-select: none;
+    }
+    .mode-option.active{
+      background: var(--accent);
+      color: var(--bg);
+    }
+    .mode-option:hover:not(.active){
+      color: var(--text);
+      background: rgba(122,162,255,.1);
+    }
     .stars{
       display: inline-flex;
       gap: 2px;
@@ -578,7 +610,12 @@
     </main>
   </div>
 
-<script>
+  <div class="mode-toggle">
+    <div class="mode-option active" data-mode="reeves">reeves</div>
+    <div class="mode-option" data-mode="sane">sane</div>
+  </div>
+
+</script><script>
   const MOVIES = [
     {
       id:"shawshank",
@@ -840,6 +877,7 @@
   let showBonus = true;
   let query = "";
   let focusedIndex = -1;
+  let currentMode = "reeves"; // Default mode
   
   // Load watched movies from localStorage
   let watchedMovies = new Set();
@@ -1406,6 +1444,51 @@
   // Initial render
   renderList();
   renderGrid();
+
+  // Mode toggle functionality - after DOM is ready
+  const modeOptions = document.querySelectorAll('.mode-option');
+  console.log('Found mode options:', modeOptions.length);
+  
+  modeOptions.forEach((option, index) => {
+    console.log(`Setting up listener for option ${index}:`, option.dataset.mode);
+    
+    option.addEventListener('click', (e) => {
+      console.log('Toggle clicked!', option.dataset.mode);
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const mode = option.dataset.mode;
+      currentMode = mode;
+      
+      // Update active state
+      modeOptions.forEach(opt => {
+        opt.classList.remove('active');
+      });
+      option.classList.add('active');
+      
+      // Save mode to localStorage
+      try {
+        localStorage.setItem('currentMode', currentMode);
+      } catch (e) {
+     
+
+  // Load saved mode from localStorage
+  try {
+    const savedMode = localStorage.getItem('currentMode');
+    if (savedMode && (savedMode === 'sane' || savedMode === 'reeves')) {
+      currentMode = savedMode;
+      
+      // Update UI to reflect saved mode
+      document.querySelectorAll('.mode-option').forEach(opt => {
+        opt.classList.remove('active');
+        if (opt.dataset.mode === currentMode) {
+          opt.classList.add('active');
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('Failed to load mode from localStorage:', e);
+  }
 </script>
 </body>
 </html>

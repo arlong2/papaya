@@ -79,11 +79,12 @@
     }
 
     #top-nav .nav-logo {
-      width: 40px;
-      height: 40px;
+      width: 32px;
+      height: 32px;
       border-radius: 999px;
       background: url("http://papaya.party/img/sea-5.png") center/100% no-repeat,
         var(--accent);
+      margin-left: 4px;
     }
 
     #top-nav .nav-textgroup {
@@ -136,7 +137,6 @@
     /* Mobile menu button - hidden on desktop, shown on mobile */
     #mobile-menu-toggle {
       display: none;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
       position: relative;
@@ -145,19 +145,16 @@
       background: none;
       border: none;
       cursor: pointer;
-      padding: 8px;
       margin-left: auto;
       flex-shrink: 0;
+      font-size: 32px;
+      color: var(--text-main);
+      line-height: 1;
+      transition: transform 0.2s ease;
     }
 
-    #mobile-menu-toggle span {
-      display: block;
-      width: 28px;
-      height: 3px;
-      background: var(--text-main);
-      margin: 4px 0;
-      transition: 0.3s;
-      border-radius: 2px;
+    #mobile-menu-toggle.active {
+      transform: rotate(90deg);
     }
 
     #mobile-nav-menu {
@@ -785,18 +782,7 @@
       /* Show hamburger menu button on mobile */
       #mobile-menu-toggle {
         display: flex !important;
-      }
-
-      #mobile-menu-toggle.active span:nth-child(1) {
-        transform: rotate(-45deg) translate(-5px, 6px);
-      }
-
-      #mobile-menu-toggle.active span:nth-child(2) {
-        opacity: 0;
-      }
-
-      #mobile-menu-toggle.active span:nth-child(3) {
-        transform: rotate(45deg) translate(-5px, -6px);
+        font-size: 48px;
       }
 
       /* Hide desktop nav links on mobile */
@@ -856,6 +842,25 @@
         margin-bottom: 0;
       }
 
+      /* Adjust sidebar padding and gaps when scrolling down */
+      body.scrolling-down #sidebar {
+        padding-top: 0;
+        gap: 0;
+      }
+
+      #sidebar {
+        transition: padding-top 0.3s ease, gap 0.3s ease;
+      }
+
+      /* Remove top margin from list when scrolling */
+      body.scrolling-down #poi-list {
+        margin-top: 0;
+      }
+
+      #poi-list {
+        transition: margin-top 0.3s ease;
+      }
+
       .popup-card-photo,
       .popup-description,
       .mk-callout-close-button {
@@ -896,7 +901,7 @@
         position: absolute;
         top: 12px;
         left: 12px;
-        z-index: 1000;
+        z-index: 10001;
         padding: 9px 16px;
         border-radius: 999px;
         border: 1px solid rgba(148, 163, 184, 0.9);
@@ -948,11 +953,7 @@
     <div class="nav-edition">Winter 2025 edition</div>
     
     <!-- Mobile hamburger menu -->
-    <button id="mobile-menu-toggle">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
+    <button id="mobile-menu-toggle">☰</button>
     <div id="mobile-nav-menu">
       <a href="about.html">About</a>
       <a href="seattle.html">Guide</a>
@@ -1010,10 +1011,9 @@
   <script>
     // Password protection with hashing
     // SHA-256 hash of the password
-    // Current password: "seawin25"
     // To generate a new hash for a different password, run this in browser console:
     // crypto.subtle.digest('SHA-256', new TextEncoder().encode('your-password')).then(h => console.log(Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join('')))
-    const passwordHash = "d643c1fe1160fd1a7c4158f884d50db30594eb82aaf9f9257e3eaaefc3aa4bcb"; // Hash of "seawin25"
+    const passwordHash = "d643c1fe1160fd1a7c4158f884d50db30594eb82aaf9f9257e3eaaefc3aa4bcb";
     const sessionKey = "seattleListAuth";
     let isAuthenticated = false;
     
@@ -1381,17 +1381,23 @@
           var lonPerPixel = currentSpan.longitudeDelta / mapRect.width;
           
           var currentCenter = map.center;
-          var newCenter = new mapkit.Coordinate(
-            currentCenter.latitude + (pinOffsetY * latPerPixel), // Move pin down = increase lat
-            currentCenter.longitude - (pinOffsetX * lonPerPixel)  // Move pin right = decrease lon
-          );
-          map.setCenterAnimated(newCenter, true);
+          var newLat = parseFloat(currentCenter.latitude) + (pinOffsetY * latPerPixel);
+          var newLon = parseFloat(currentCenter.longitude) - (pinOffsetX * lonPerPixel);
           
-          // Wait for map to pan, then position popup
-          setTimeout(function() {
+          if (!isNaN(newLat) && !isNaN(newLon)) {
+            var newCenter = new mapkit.Coordinate(newLat, newLon);
+            map.setCenterAnimated(newCenter, true);
+            
+            // Wait for map to pan, then position popup
+            setTimeout(function() {
+              updatePopupPosition();
+              customPopup.style.visibility = 'visible';
+            }, 350);
+          } else {
+            // If coordinates are invalid, just show popup without adjustment
             updatePopupPosition();
             customPopup.style.visibility = 'visible';
-          }, 350);
+          }
         } else {
           updatePopupPosition();
           customPopup.style.visibility = 'visible';
@@ -1467,8 +1473,17 @@
           baseIcon = pinIcons.three;
         }
 
+        // Validate coordinates before creating annotation
+        var lat = parseFloat(loc.coords[0]);
+        var lon = parseFloat(loc.coords[1]);
+        
+        if (isNaN(lat) || isNaN(lon)) {
+          console.error('Invalid coordinates for location:', loc.id, loc.coords);
+          return; // Skip this location
+        }
+
         // Create MapKit annotation
-        var coordinate = new mapkit.Coordinate(loc.coords[0], loc.coords[1]);
+        var coordinate = new mapkit.Coordinate(lat, lon);
         var annotation = new mapkit.ImageAnnotation(coordinate, {
           url: { 1: baseIcon },
           size: { width: 32, height: 45 },
@@ -1552,21 +1567,29 @@
               document.body.classList.add("show-map");
               setTimeout(function () {
                 // Center the map after showing on mobile
-                var coord = new mapkit.Coordinate(location.coords[0], location.coords[1]);
-                map.setCenterAnimated(coord, true);
-                map.cameraDistance = 5000; // Closer zoom for detail
-                setTimeout(function() {
-                  map.selectedAnnotation = annotationRef;
+                var lat = parseFloat(location.coords[0]);
+                var lon = parseFloat(location.coords[1]);
+                if (!isNaN(lat) && !isNaN(lon)) {
+                  var coord = new mapkit.Coordinate(lat, lon);
+                  map.setCenterAnimated(coord, true);
+                  map.cameraDistance = 5000; // Closer zoom for detail
                   setTimeout(function() {
-                    setActivePoi(location.id);
-                  }, 50);
-                }, 300);
+                    map.selectedAnnotation = annotationRef;
+                    setTimeout(function() {
+                      setActivePoi(location.id);
+                    }, 50);
+                  }, 300);
+                }
               }, 300);
             } else {
               // Center the map on the pin
-              var coord = new mapkit.Coordinate(location.coords[0], location.coords[1]);
-              map.setCenterAnimated(coord, true);
-              map.cameraDistance = 5000; // Closer zoom for detail
+              var lat = parseFloat(location.coords[0]);
+              var lon = parseFloat(location.coords[1]);
+              if (!isNaN(lat) && !isNaN(lon)) {
+                var coord = new mapkit.Coordinate(lat, lon);
+                map.setCenterAnimated(coord, true);
+                map.cameraDistance = 5000; // Closer zoom for detail
+              }
               
               // Select annotation after a short delay
               setTimeout(function() {
@@ -1584,15 +1607,19 @@
 
       if (locations.length > 0) {
         var first = locations[0];
-        var coord = new mapkit.Coordinate(first.coords[0], first.coords[1]);
-        map.setCenterAnimated(coord, true);
-        map.cameraDistance = 8000; // Medium zoom level
-        if (markersById[first.id]) {
-          setTimeout(function() {
-            map.selectedAnnotation = markersById[first.id];
-          }, 500);
+        var lat = parseFloat(first.coords[0]);
+        var lon = parseFloat(first.coords[1]);
+        if (!isNaN(lat) && !isNaN(lon)) {
+          var coord = new mapkit.Coordinate(lat, lon);
+          map.setCenterAnimated(coord, true);
+          map.cameraDistance = 8000; // Medium zoom level
+          if (markersById[first.id]) {
+            setTimeout(function() {
+              map.selectedAnnotation = markersById[first.id];
+            }, 500);
+          }
+          setActivePoi(first.id);
         }
-        setActivePoi(first.id);
       }
 
     }
@@ -1848,8 +1875,11 @@
     
     if (mobileMenuToggle) {
       mobileMenuToggle.addEventListener('click', function() {
-        this.classList.toggle('active');
+        const isOpen = this.classList.toggle('active');
         mobileNavMenu.classList.toggle('open');
+        
+        // Change symbol between hamburger and X
+        this.textContent = isOpen ? '✕' : '☰';
       });
 
       // Close menu when clicking outside
